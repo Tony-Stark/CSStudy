@@ -4,11 +4,30 @@ getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
 		 mov @(r5)+, r0 ;sentence address
 		 mov @(r5)+, r1 ;sentence length
 		 mov @(r5)+, r2 ;i
-		 
-nextWord: 
-		 
-		 
-		 rts r5
+		 while1gw: tst r2
+				   beq findLengthgw
+				   cmpb (r0), #40
+				   bne while1p2
+				   while1p1gw: dec r1
+				   		       cmpb(r0)+, #40
+				   		       beq while1p1gw
+				   		       dec r2
+				   		       dec r0
+				   		       br while1gw
+				   while1p2gw: dec r1
+				   		       cmpb (r0)+, #40
+				   		       bne while1p2gw
+				   			   br while1gw
+		 findLengthgw: 	mov r0, 12(sp)
+						clr 10(sp)
+						while2gw: cmpb (r0)+, #40
+								  beq returngw
+								  inc 10(sp)
+								  br while2gw
+		 returngw: mov (sp)+, r2
+				   mov (sp)+, r1
+				   mov (sp)+, r0
+	 rts r5
 
 
 
