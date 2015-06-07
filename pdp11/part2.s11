@@ -1,1 +1,58 @@
-.= torg + 1000
+getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
+		 mov r1, -(sp) ;;
+		 mov r2, -(sp) ;;
+		 mov @(r5)+, r0 ;sentence address
+		 mov @(r5)+, r1 ;sentence length
+		 mov @(r5)+, r2 ;i
+		 
+nextWord: 
+		 
+		 
+		 rts r5
+
+
+
+		 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+getWord:
+	;param1 sentence address 	-inline
+	;param2 sentence length		-inline
+	;param3 word index			-inline 		
+	;output2	word address	:12
+	;output1	word length		:10
+	;rts address 				:6
+	mov r0, -(sp)	;store 		:4
+	mov r1, -(sp)	;store 		:2
+	mov r2, -(sp)	;store 		:0
+	
+	mov @(r5)+, r0	;r0 holds sentence address 
+	mov @(r5)+, r1	;r1 holds sentence length	
+	mov @(r5)+, r2	;r2 holds the index of the requested word
+	dec r1	;initialize r2
+	dec r2	;initialize r2
+	beq goOut	
+	
+	whileloop:
+	cmpb (r0)+, #40 ;char == space?
+	bne skip
+	dec r2	;initialize r2
+	beq goOut
+	
+	skip:
+	sob r1, whileloop
+	goOut:
+	
+	;now r1 has the address of the word
+	mov r0, 12(sp)
+	mov #0, 10(sp) ;init length
+	
+	lenloop:
+	cmpb (r0)+, #40 ;char == space?
+	beq return
+	add #1, 10(sp)
+	sob r1, lenloop
+	
+	return:
+	mov (sp)+, r2	;restore
+	mov (sp)+, r1	;restore
+	mov (sp)+, r0	;restore
+rts r5
