@@ -1,0 +1,98 @@
+Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
+
+
+	S O U R C E    F I L E    :    test2.s11
+	========================================
+
+000000                             1     .= torg + 2000
+002000   012706 002000             2     main: mov #main, sp
+                                   3     ;add #100, (sp)
+002004   005746                    4     	  tst -(sp)
+002006   012746 002206             5     	  mov #X, -(sp)
+002012   012746 000003             6     	  mov #3, -(sp)
+002016   004767 000006             7     	  jsr pc, isWord
+002022   016600 000002             8     	  mov 2(sp), r0
+002026   000000                    9     	  halt
+                                  10     	  
+002030                            11     isWord:	;word address  20
+                                  12     		;word length  16
+                                  13     		;rts address   14
+002030   010046                   14     		mov r0, -(sp);12
+002032   010146                   15     	    mov r1, -(sp);10
+002034   010246                   16     	    mov r2, -(sp);6
+002036   010346                   17     	    mov r3, -(sp);4
+002040   010446                   18     	    mov r4, -(sp);2
+002042   010546                   19     	    mov r5, -(sp);0
+002044   016600 000020            20     		mov 20(sp), r0
+002050   016601 000016            21     		mov 16(sp), r1
+002054   012702 002212            22     		mov #Dictionary, r2
+002060   012703 002244            23     		mov #DicLen, r3
+002064   111303                   24     		movb (r3), r3
+002066   005703                   25     		while1iw: tst r3
+002070   001434                   26     				 beq falseiw
+002072   005204                   27     				 inc r4
+002074   121227 000100            28     				 cmpb (r2), #100
+002100   001414                   29     				 beq checkNikud
+002102   122022                   30     				 cmpb (r0)+, (r2)+
+002104   001001                   31     				 bne skipNWiw
+002106   000767                   32     				 br while1iw
+002110   016600 000020            33     		skipNWiw: mov 20(sp), r0
+002114   016601 000016            34     				 mov 16(sp), r1			
+002120   005004                   35     				 clr r4
+002122                            36     				 whileNWiw:
+002122   122227 000100            37     						   cmpb (r2)+, #100
+002126   001757                   38     						   beq while1iw
+002130   000774                   39     						   br whileNWiw
+                                  40     		
+002132   005304                   41     		checkNikud:  dec r4
+002134   120401                   42     					cmpb r4, r1
+002136   001404                   43     					beq trueiw
+002140   005303                   44     					dec r3
+002142   005703                   45     					tst r3
+002144   001350                   46     					bne while1iw
+002146   000405                   47     					br falseiw
+002150   005066 000022            48     		trueiw:	clr 22(sp)
+002154   005266 000022            49     				inc 22(sp)
+002160   000403                   50     				br return
+002162   005066 000022            51     		falseiw:	clr 22(sp)
+002166   000400                   52     				br return
+002170   012605                   53     		return: mov (sp)+, r5
+002172   012604                   54     				mov (sp)+, r4
+002174   012603                   55     				mov (sp)+, r3
+002176   012602                   56     				mov (sp)+, r2
+002200   012601                   57     				mov (sp)+, r1
+002202   012600                   58     				mov (sp)+, r0
+002204   000207                   59     				rts pc
+                                  60     
+002206      151    163    164     61     X: .ascii<ist>
+002211      000                   62     .even
+002212      120    145    162     63     Dictionary: .ascii<Perfect@job@is@Secret@top@> 
+            146    145    143            
+            164    100    152            
+            157    142    100            
+            151    163    100            
+            123    145    143            
+            162    145    164            
+            100    164    157            
+            160    100                   
+002244                            64     .even
+002244   000005                   65     DicLen: .word 5
+
+
+	S Y M B O L   T A B L E
+	=======================
+
+SYMBOL    VALUE   TYPE
+------    -----   ----
+main      002000  text     
+X         002206  text     
+isWord    002030  text     
+Dictiona  002212  text     
+DicLen    002244  text     
+while1iw  002066  text     
+falseiw   002162  text     
+checkNik  002132  text     
+skipNWiw  002110  text     
+whileNWi  002122  text     
+trueiw    002150  text     
+return    002170  text     

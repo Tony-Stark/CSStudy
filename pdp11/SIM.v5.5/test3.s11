@@ -1,0 +1,70 @@
+.= torg + 2000
+main: mov #main, sp
+
+;add #100, (sp)
+	  tst -(sp)
+	  mov #X, -(sp)
+	  mov #9., -(sp)
+	  jsr pc, isWord
+	  mov (sp)+, r0
+	  halt
+
+isWord: mov r0, -(sp)
+	mov r1, -(sp)
+	mov r2, -(sp)
+	mov r3, -(sp)
+	mov r4, -(sp)
+	mov r5, -(sp)
+	add #16, sp
+	mov (sp)+, r0		;r0 now holds the length of the word
+	mov (sp), r1		;r1 now holds the address of the word
+	mov #Dictionary, r2	;r2 will hold the dictionary address
+	mov #DicLen, r3		;r3 holds the DicLen address
+	movb (r3), r3		;r3 holds the dictionary length
+	clr r4				;r4 will hold the current word char iterator
+	mov r1, r5
+cmpWord: cmpb (r2)+, (r5)+
+	bne getNextWord
+	inc r4
+	cmp r4, r0
+	beq wordFound
+	cmpb (r2), #100
+	beq getNextWord
+	br cmpWord
+getNextWord: dec r3
+	tst r3
+	beq notFound
+	mov r1, r5
+	cmpb (r2)+, #100
+	beq cmpWord
+	br getNextAux
+getNextAux: cmpb (r2)+, #100
+	bne getNextAux
+	br cmpWord
+notFound: add #-18, sp
+	mov (sp)+, r5
+	mov (sp)+, r4
+	mov (sp)+, r3
+	mov (sp)+, r2
+	mov (sp)+, r1
+	mov (sp)+, r0
+	mov (sp), 4(sp)
+	mov #0, 6(sp)
+	cmp (sp)+, (sp)+
+	rts pc
+wordFound: add #-18, sp
+	mov (sp)+, r5
+	mov (sp)+, r4
+	mov (sp)+, r3
+	mov (sp)+, r2
+	mov (sp)+, r1
+	mov (sp)+, r0
+	mov (sp), 4(sp)
+	mov #1, 6(sp)
+	cmp (sp)+, (sp)+
+	rts pc
+Dictionary: .ascii<Perfect@job@is@Secret@top@> 
+.even
+DicLen: .word 5
+X: .ascii<YuvalSlut>
+.even

@@ -51,6 +51,7 @@ getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
 				   mov (sp)+, r0
 	 rts r5
 	  
-. = torg +5000
-.ascii<  i love atam>
+Dictionary:.ascii<Perfect@job@is@Secret@top@> 
+.even
+DicLen:.word 5
 

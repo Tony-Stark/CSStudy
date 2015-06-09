@@ -1,0 +1,96 @@
+isWord:	;word adress  20
+		;word length  16
+		;rts adress   14
+		mov r0, -(sp);12
+	    mov r1, -(sp);10
+	    mov r2, -(sp);6
+	    mov r3, -(sp);4
+	    mov r4, -(sp);2
+	    mov r5, -(sp);0
+		
+		add #16, sp
+	    mov (sp)+, r0		;r0 now holds the length of the word
+	    mov (sp), r1		;r1 now holds the address of the word
+	    mov #Dictionary, r2	;dictionary
+	    clr r3	;iterator
+	    clr r4				;DicWord 
+	    clr r5				;DicWordLength
+		while1iw: cmpb (r2), #100
+				  
+	;	while1iw: cmpb DicLen, r3
+	;			  tst -(sp)
+	;			  tst -(sp)
+	;			  mov r3, -(sp)
+	;		      jsr geWordAtSign
+	;			  #Dictionary
+	;			  #DicLen
+	;			  mov (sp)+, r0
+	;			  mov (sp)+, r1
+	;	;getDicWordiw: add #Dictionary, r4
+	;	;			  cmpb r4, #100
+	;	;			  beq cmpWordiw
+	;	;			  inc r4
+	;	;			  br getDicWordiw
+	;	;cmpWordiw:	  mov r4, r5
+	;	;			  sub #Dictionary, r5
+	;	;			  cmpb r5, r0
+	;	;			  bne falseiw
+	;	;			  mov r1, r3 ;r3 holds the adress
+	;	;			  mov r0, r2
+	;	;			  while1iw: tst r5
+	;	;					    beq falseiw
+	;	;					    cmpb (r4)+, (r3)+
+	;	;					    beq trueiw
+	;	;					    dec r5
+	;	;					    br while1iw
+	;	;		jmp returniw
+strCmp: 
+		;word1 address  20
+		;word1 length   18
+		;word2 address  16
+		;word2 length   14
+		;rts adress     12
+		mov r0, -(sp)  ;10
+	    mov r1, -(sp)  ;6		 
+		mov r2, -(sp)  ;4
+	    mov r3, -(sp)  ;2
+		mov r4, -(sp)  ;0
+		add #14, sp
+		mov (sp)+, r3  ;length of the word2
+	    mov (sp)+, r2  ;address of word2
+		mov (sp)+, r1  ;length of the word1
+	    mov (sp),  r0  ;address of word1
+		add r1, r4
+		sub r3, r4
+		dec r4
+		bgt falsesc 
+		while1sc: tst r1
+				  beq doublechecksc
+				  tst r3
+				  beq doublechecksc
+				  inc r3
+				  inc r1
+				  cmpb (r0)+, (r2)+
+				  bne falsesc
+				  dec r3
+				  dec r1
+				  br while1sc
+		doublechecksc: cmpb r1,r3
+					   bgt falsesc
+					   cmpb r1,r3
+					   beq truesc
+					   dec r2
+					   cmpb r2, #41
+					   bne falsesc
+					   cmpb r2, #77
+					   bne falsesc
+					   cmpb r2, #054
+					   bne falsesc
+					   cmpb r2, #056
+					   bne falsesc
+					   br true
+		falsesc: clr r4 ;;;return
+				 rts p7
+		truesc: clr r4 ;;;return
+				 inc r4
+				 rts p7
