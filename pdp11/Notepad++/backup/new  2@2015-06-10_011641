@@ -1,0 +1,48 @@
+boazMain: clr r0
+		 clr r1
+		 clr r3
+initCollSeq: cmpb r1, #16.
+		    beq initHoles
+initCollSeqp1: cmpb r0, #16.
+			  beq initCollSeq
+			  cmpb #ParMat(r0), r1
+			  bne skip1
+			  movb r0, #Collection(r3)
+			  movb r0, #Sequence(r3)
+			  bne skip1
+			  inc r3
+		   	  inc r1
+			  clr r0
+			  br initCollSeq
+skip1: inc r0
+	   br initCollSeqp1
+initHoles: clr r0
+		  clr r1
+while1:  cmpb r0, #16.
+		beq step3
+		cmpb #ParMat(r0),#-1
+		beq AddHole
+		inc r0
+		br while1
+AddHole: mov #ParMat(r0), #HolesArray(r1)
+		inc r1
+		inc r0
+		br while1
+step3: mov r3, #Length
+	  clr r0
+	  clr r1
+	  clr r3
+AddSequenceToMatrix: cmpb r3, Length.
+				    beq step4
+					mov Sequence(r0),#HolesArray(r1)
+					inc r0
+					inc r1
+					br AddSequenceToMatrix
+step4: ;parmat isLegal?
+	   mov -(sp), 
+		;if yes: decode.
+			;secret isSentence?
+		     ;if yes mov to output and we're done.
+			 ;if not; nextComp and branch AddSequenceToMatrix
+		;if not: nextComp and branch AddSequenceToMatrix
+		  

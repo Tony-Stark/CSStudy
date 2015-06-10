@@ -1,173 +1,342 @@
+boazMain: clr r0
+		 clr r1
+		 clr r3
+initCollSeq: cmpb r1, #16.
+		    beq initHoles
+initCollSeqp1: cmpb r0, #16.
+			  beq initCollSeq
+			  mov #ParMat, r5
+			  add r0, r5
+			  cmpb (r5), r1
+			  bne skip1
+			  mov #Collection, r5
+		      add r3, r5
+			  movb r0, (r5)
+			  mov #Sequence, r5
+		      add r3, r5
+			  movb r0, (r5)
+			  bne skip1
+			  inc r3
+		   	  inc r1
+			  clr r0
+			  br initCollSeq
+skip1: inc r0
+	   br initCollSeqp1
+initHoles: clr r0
+		  clr r1
+while1:  cmpb r0, #16.
+		beq step3
+		mov #ParMat, r5
+		add r0, r5
+		cmpb (r5),#-1
+		beq AddHole
+		inc r0
+		br while1
+AddHole:mov #ParMat, r5
+		add r0, r5 
+		mov #HolesArray, r4
+		add r1, r4
+		mov (r5), (r4)
+		inc r1
+		inc r0
+		br while1
+step3: mov r3, #Length
+	  clr r0
+	  clr r1
+	  clr r3
+AddSequenceToMatrix: cmpb r3, Length.
+				    beq step4
+					mov #HolesArray, r5
+		            add r1, r5
+					mov Sequence(r0),(r5)
+					inc r0
+					inc r1
+					br AddSequenceToMatrix
+step4: ;parmat isLegal?
+	   tst -(sp)
+	   mov #ParMat,-(sp) 
+	   jsr pc, isLegal
+	   tst (sp)+
+	   cmp (sp)+, #1
+	   bne advSeq ;if yes: decode.
+	   mov #ParMat, -(sp)
+	   mov #Secret, -(sp)
+	   jsr pc, decode
+	   tst (sp)+
+	   tst (sp)+
+	   
+	   tst (sp)+
+	   mov #SecretLen,-(sp) 
+	   mov #Output,-(sp) 
+	   jsr pc, isSentence
+	   tst (sp)+
+	   tst (sp)+
+	   cmp (sp)+, #1
+	   beq returnbm
+advSeq: mov #Collection, -(sp)
+       mov #Sequence, -(sp)
+	   mov #Length, -(sp)
+       jsr pc, nextComp
+	   tst (sp)+
+	   tst (sp)+
+	   tst (sp)+
+	   br AddSequenceToMatrix
+		     ;if yes mov to output and we're done.
+			 ;if not; nextComp and branch AddSequenceToMatrix
+		;if not: nextComp and branch AddSequenceToMatrix
+;;;; Alright, now we only have to write the DECODE and IsSentence
+;;;;;;IsSentence;;;;;
+isSentence: ;output 22
+			; secret 20
+           ;secretlen 16
+		   mov r0, -(sp) ;12
+	       mov r1, -(sp) ;10
+	       mov r2, -(sp) ;6
+	       mov r3, -(sp) ;4
+	       mov r4, -(sp) ;2
+	       mov r5, -(sp) ;0
+		   clr r0
+		   clr r1
+		   clr r2
+		   clr r3
+		   clr r4
+		   clr r5
+		   mov #1,22(sp)
+while1is: cmpb r0, @16(sp)
+		  beq returnis
+		  tst -(sp)
+		  tst -(sp)
+		  mov @20(sp), -(sp)
+		  mov @16(sp), -(sp)
+		  mov r4, -(sp)
+		  jsr r5, getWord
+		  tst (sp)+
+		  tst (sp)+
+		  mov (sp)+,r1 ;address
+		  mov (sp)+,r2 ;length
+		  mov r2, r3
+		  add r1, r3
+		  dec r3
+		  cmpb (r3), #41
+		  beq hasNikud
+		  cmpb (r3), #54
+		  beq hasNikud
+		  cmpb (r3), #56
+		  beq hasNikud
+		  cmpb (r3), #77
+		  beq hasNikud
+toIsWord: tst -(sp)
+		  mov r1, -(sp)
+		  mov r2, -(sp)
+		  jsr pc, isWord
+		  tst (sp)+
+		  tst (sp)+
+		  cmpb (sp)+, #1
+		  bne falseis
+		  inc r4
+		  sub #Secret, r3
+		  add r3, r0
+		  jmp while1is
+hasNikud: dec r2
+	     br toIsWord
+falseis: mov #0,22(sp)
+		 br returnis
+returnis:        mov (sp)+, r5    ;12
+				 mov (sp)+, r4     ;10
+				 mov (sp)+, r3    ;6
+				 mov (sp)+, r2    ;4
+				 mov (sp)+, r1    ;2
+			   	 mov (sp)+, r0
+rts pc 
 getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
-		 mov r1, -(sp) ;;
-		 mov r2, -(sp) ;;
-		 mov (r5)+, r0 ;sentence address
-		 mov (r5)+, r1 ;sentence length
-		 mov (r5)+, r2 ;i
-		 while1gw: tst r2
-				   beq findLengthgw
-				   cmpb (r0), #40
-				   beq while1p1gw
-				   dec r2
-				   br while1p2gw
-				   while1p1gw: dec r1
-				   		       cmpb(r0)+, #40
-				   		       beq while1p1gw
-				   		       dec r0
-				   		       br while1gw
-				   while1p2gw: tst r2
-							   beq findLengthgw
-							   tst r1
-							   beq findLengthgw
-							   dec r1
-				   		       cmpb (r0)+, #40
-				   		       bne while1p2gw
-							   dec r0
-							   inc r1
-				   			   br while1gw
-		 findLengthgw: 	mov r0, 10(sp)
-						clr 12(sp)
-						while2gw: cmpb (r0)+, #40
-								  beq returngw
-								  tst r1
-								  beq returngw
-								  inc 10(sp)
-								  dec r1
-								  br while2gw
-		 returngw: mov (sp)+, r2
-				   mov (sp)+, r1
-				   mov (sp)+, r0
-	 rts r5
-	 
+	  	mov r1, -(sp) ;;
+		mov r2, -(sp) ;;
+		mov (r5)+, r0 ;sentence address
+		mov (r5)+, r1 ;sentence length
+		mov (r5)+, r2 ;i
+		while1gw: tst r2
+		beq findLengthgw
+		cmpb (r0), #40
+		beq while1p1gw
+		dec r2
+		br while1p2gw
+		while1p1gw: dec r1
+		cmpb(r0)+, #40
+		beq while1p1gw
+		dec r0
+		br while1gw
+		while1p2gw: tst r2
+		beq findLengthgw
+		tst r1
+		beq findLengthgw
+		dec r1
+		cmpb (r0)+, #40
+		bne while1p2gw
+		dec r0
+		inc r1
+		br while1gw
+		findLengthgw:  mov r0, 10(sp)
+		clr 12(sp)
+		while2gw: cmpb (r0)+, #40
+		beq returngw
+		tst r1
+		beq returngw
+		inc 10(sp)
+		dec r1
+		br while2gw
+		returngw: mov (sp)+, r2
+		mov (sp)+, r1
+		mov (sp)+, r0
+		rts r5
+
 
 isWord: mov r0, -(sp) ;12
-	mov r1, -(sp) ;10
-	mov r2, -(sp) ;6
-	mov r3, -(sp) ;4
-	mov r4, -(sp) ;2
-	mov r5, -(sp) ;0
-	add #16, sp
-	mov (sp)+, r0		;r0 now holds the length of the word
-	mov (sp), r1		;r1 now holds the address of the word
-	mov #Dictionary, r2	;r2 will hold the dictionary address
-	mov #DicLen, r3		;r3 holds the DicLen address
-	movb (r3), r3		;r3 holds the dictionary length
-	clr r4				;r4 will hold the current word char iterator
-	mov r1, r5
-cmpWord: cmpb (r2)+, (r5)+
-	bne getNextWord
-	inc r4
-	cmp r4, r0
-	beq wordFoundiw
-	cmpb (r2), #100
-	beq getNextWord
-	br cmpWord
-getNextWord: dec r3
-	tst r3
-	beq notFound
-	mov r1, r5
-	cmpb (r2)+, #100
-	beq cmpWord
-	br getNextAux
-getNextAux: cmpb (r2)+, #100
-	bne getNextAux
-	br cmpWord
-notFound: add #-18, sp
-	mov (sp)+, r5
-	mov (sp)+, r4
-	mov (sp)+, r3
-	mov (sp)+, r2
-	mov (sp)+, r1
-	mov (sp)+, r0
-	mov (sp), 4(sp)
-	mov #0, 6(sp)
-	cmp (sp)+, (sp)+
-	rts pc
-wordFoundiw: add #-18, sp
-	mov (sp)+, r5
-	mov (sp)+, r4
-	mov (sp)+, r3
-	mov (sp)+, r2
-	mov (sp)+, r1
-	mov (sp)+, r0
-	mov (sp), 4(sp)
-	mov #1, 6(sp)
-	cmp (sp)+, (sp)+
-	rts pc
-nextComp: ;length           20
-		 ;sequence         16
-		 ;collection       14
-		 mov r0, -(sp)    ;12
-		 mov r1, -(sp)    ;10
-		 mov r2, -(sp)    ;6
-		 mov r3, -(sp)    ;4
-		 mov r4, -(sp)    ;2
-		 mov r5, -(sp)   ;0
-		 mov (sp)+, r0 ;seq addr	
-		 mov (sp)+, r1 ;col addr
-		 mov (sp), r2  ;length	 
-		 clr r3 ;seq iterator
-		 clr r4 ; col iterator
-		 add #20,sp
-		 mov (sp)+, r0
-		 dec r0
-		 mov r0, r2
-		 add @(sp)+, r2
-		 mov @(sp),r4
-		 findnc: cmp(r4)+,(r2)
-				beq step2
-				inc r3
-				br findnc
-		 step2: cmp r3, r0
-		 beq cyclicnc
+	   mov r1, -(sp) ;10
+	   mov r2, -(sp) ;6
+	   mov r3, -(sp) ;4
+	   mov r4, -(sp) ;2
+	   mov r5, -(sp) ;0
+	   add #16, sp
+	   mov (sp)+, r0       ;r0 now holds the length of the word
+	   mov (sp), r1        ;r1 now holds the address of the word
+	   mov #Dictionary, r2 ;r2 will hold the dictionary address
+	   mov #DicLen, r3     ;r3 holds the DicLen address
+	   movb (r3), r3       ;r3 holds the dictionary length
+	   clr r4              ;r4 will hold the current word char iterator
+	   mov r1, r5
+	   cmpWord: cmpb (r2)+, (r5)+
+	   bne getNextWord
+	   inc r4
+	   cmp r4, r0
+	   beq wordFoundiw
+	   cmpb (r2), #100
+	   beq getNextWord
+	   br cmpWord
+	   getNextWord: dec r3
+	   tst r3
+	   beq notFound
+	   mov r1, r5
+	   cmpb (r2)+, #100
+	   beq cmpWord
+	   br getNextAux
+	   getNextAux: cmpb (r2)+, #100
+	   bne getNextAux
+	   br cmpWord
+	   notFound: add #-18, sp
+	   mov (sp)+, r5
+	   mov (sp)+, r4
+	   mov (sp)+, r3
+	   mov (sp)+, r2
+	   mov (sp)+, r1
+	   mov (sp)+, r0
+	   mov (sp), 4(sp)
+	   mov #0, 6(sp)
+	   cmp (sp)+, (sp)+
+	   rts pc
+	   wordFoundiw: add #-18, sp
+	   mov (sp)+, r5
+	   mov (sp)+, r4
+	   mov (sp)+, r3
+	   mov (sp)+, r2
+	   mov (sp)+, r1
+	   mov (sp)+, r0
+	   mov (sp), 4(sp)
+	   mov #1, 6(sp)
+	   cmp (sp)+, (sp)+
+	   rts pc
+
+nextComp: ;collection           22
+         ;sequence         20
+         ;length       16
+		 ;rts address      14
+         mov r0, -(sp)    ;12
+         mov r1, -(sp)    ;10
+         mov r2, -(sp)    ;6
+         mov r3, -(sp)    ;4
+         mov r4, -(sp)    ;2
+         mov r5, -(sp)   ;0
+		 ;add #14,sp
+         mov 22(sp), r1 ;col addr    
+         mov 20(sp), r2 ;seq addr
+         mov 16(sp), r0  ;length   
+         clr r3 ;seq iterator
+         clr r4 ; col index
+         dec r0 ;length - 1;
+		 mov r0, r5
+         ;mov r0, r2
+         add r0, r2
+		 mov 16(sp), r3
 		 inc r3
-		 add 14(sp),r3
-		 movb (r3),(r2)
-		 rts pc
-		 cyclicnc: movb @14(sp), r2
-		 dec r2
-		 br findnc
-		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+		 
+         findnc: tst r3
+				beq return
+				cmpb (r1)+,(r2)
+                beq easync
+                sob r0, findnc
+		 cyclicnc: mov 22(sp), r1
+				  movb (r1), (r2)
+				  dec r2
+				  dec r3
+				  mov r5, r0
+                  br findnc
+         easync:  movb (r1), (r2)
+				 dec r3
+				 br return
+		 return: mov (sp)+, r5    ;12
+				 mov (sp)+, r4     ;10
+				 mov (sp)+, r3    ;6
+				 mov (sp)+, r2    ;4
+				 mov (sp)+, r1    ;2
+			   	 mov (sp)+, r0
+         rts pc
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;for boazMain:
+Histogram: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+Histogram2: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+compSequence: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+compCollection: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+compLength: .byte		 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 getWord:
-	;param1 sentence address 	-inline
-	;param2 sentence length		-inline
-	;param3 word index			-inline 		
-	;output2	word address	:12
-	;output1	word length		:10
-	;rts address 				:6
-	mov r0, -(sp)	;store 		:4
-	mov r1, -(sp)	;store 		:2
-	mov r2, -(sp)	;store 		:0
-	
-	mov (r5)+, r0	;r0 holds sentence address 
-	mov (r5)+, r1	;r1 holds sentence length	
-	mov (r5)+, r2	;r2 holds the index of the requested word
-	dec r1	;initialize r2
-	dec r2	;initialize r2
-	beq goOut	
-	
-	whileloop:
-	cmpb (r0)+, #40 ;char == space?
-	bne skip
-	dec r2	;initialize r2
-	beq goOut
-	
-	skip:
-	sob r1, whileloop
-	goOut:
-	
-	;now r1 has the address of the word
-	mov r0, 12(sp)
-	mov #0, 10(sp) ;init length
-	
-	lenloop:
-	cmpb (r0)+, #40 ;char == space?
-	beq return
-	add #1, 10(sp)
-	sob r1, lenloop
-	
-	return:
-	mov (sp)+, r2	;restore
-	mov (sp)+, r1	;restore
-	mov (sp)+, r0	;restore
+;param1 sentence address    -inline
+;param2 sentence length     -inline
+;param3 word index          -inline
+;output2    word address    :12
+;output1    word length     :10
+;rts address                :6
+mov r0, -(sp)   ;store      :4
+mov r1, -(sp)   ;store      :2
+mov r2, -(sp)   ;store      :0
+
+mov (r5)+, r0   ;r0 holds sentence address
+mov (r5)+, r1   ;r1 holds sentence length
+mov (r5)+, r2   ;r2 holds the index of the requested word
+dec r1  ;initialize r2
+dec r2  ;initialize r2
+beq goOut
+
+whileloop:
+cmpb (r0)+, #40 ;char == space?
+bne skip
+dec r2  ;initialize r2
+beq goOut
+
+skip:
+sob r1, whileloop
+goOut:
+
+;now r1 has the address of the word
+mov r0, 12(sp)
+mov #0, 10(sp) ;init length
+
+lenloop:
+cmpb (r0)+, #40 ;char == space?
+beq return
+add #1, 10(sp)
+sob r1, lenloop
+
+return:
+mov (sp)+, r2   ;restore
+mov (sp)+, r1   ;restore
+mov (sp)+, r0   ;restore
 rts r5
