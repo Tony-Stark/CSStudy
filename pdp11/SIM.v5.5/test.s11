@@ -3,54 +3,59 @@ main: mov #main, sp
 	  tst -(sp)
 	  tst -(sp)
 	  jsr r5, getWord
-	  .word 5000
-	  .word 11.
+	  .word poop
+	  .word 17
 	  .word 2.
 	  mov (sp)+, r0
 	  mov (sp)+, r1
 	  halt
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
 		 mov r1, -(sp) ;;
 		 mov r2, -(sp) ;;
+		 mov r3, -(sp) ;;
+		 mov r4, -(sp) ;;
 		 mov (r5)+, r0 ;sentence address
 		 mov (r5)+, r1 ;sentence length
 		 mov (r5)+, r2 ;i
-		 while1gw: tst r2
-				   beq findLengthgw
-				   cmpb (r0), #40
-				   beq while1p1gw
-				   dec r2
-				   br while1p2gw
-				   while1p1gw: dec r1
-				   		       cmpb(r0)+, #40
-				   		       beq while1p1gw
-				   		       dec r0
-				   		       br while1gw
-				   while1p2gw: tst r2
-							   beq findLengthgw
-							   tst r1
-							   beq findLengthgw
-							   dec r1
-				   		       cmpb (r0)+, #40
-				   		       bne while1p2gw
-							   dec r0
-							   inc r1
-				   			   br while1gw
-		 findLengthgw: 	mov r0, 12(sp)
-						clr 10(sp)
-						while2gw: cmpb (r0)+, #40
-								  beq returngw
-								  tst r1
-								  beq returngw
-								  inc 10(sp)
-								  dec r1
-								  br while2gw
-		 returngw: mov (sp)+, r2
+         clr r3
+				   
+		eat_space: cmpb (r0), #40
+				   bne worddd
+				   inc r0
+				   dec r1
+				   br eat_space
+				   
+		worddd: cmp r2,#1
+              beq shava
+			  dec r2
+        reach_space:  cmpb (r0), #40
+				   beq spaaaace
+				   inc r0
+				   dec r1
+				   br reach_space
+
+        spaaaace: br eat_space
+        shava:     mov r0,16(sp)
+		callen:    cmpb (r0), #40
+				   beq ddddone
+				   inc r3
+				   inc r0
+				   dec r1
+				   beq ddddone
+				   br callen
+				   
+		ddddone:  mov r3,14(sp) 		   
+				   
+		 returngw: mov (sp)+, r4
+				   mov (sp)+, r3
+				   mov (sp)+, r2
 				   mov (sp)+, r1
 				   mov (sp)+, r0
 	 rts r5
-	  
+. =  torg + 5000
+poop: .ascii<Have a good job>
+
 Dictionary:.ascii<Perfect@job@is@Secret@top@> 
 .even
 DicLen:.word 5

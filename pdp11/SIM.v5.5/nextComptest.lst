@@ -6,62 +6,61 @@ Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
 
                                    1     ;;nextComp test
 000000                             2     . = torg + 1000
-001000   012746 001152             3     main: mov #Collection, -(sp)
+001000   012746 001154             3     main: mov #Collection, -(sp)
 001004   012746 001157             4           mov #Sequence, -(sp)
-001010   012746 000005             5     	  mov #5, -(sp)
-001014   004767 000006             6     	  jsr pc, nextComp
+001010   012746 000003             5     	  mov #3, -(sp)
+001014   004767 000010             6     	  jsr pc, nextComp
 001020   012600                    7     	  mov (sp)+, r0
 001022   012601                    8     	  mov (sp)+, r1
-001024   011602                    9     	  mov (sp), r2
-001026                            10     nextComp: ;collection           22
-                                  11              ;sequence         20
-                                  12              ;length       16
-                                  13     		 ;rts address      14
-001026   010046                   14              mov r0, -(sp)    ;12
-001030   010146                   15              mov r1, -(sp)    ;10
-001032   010246                   16              mov r2, -(sp)    ;6
-001034   010346                   17              mov r3, -(sp)    ;4
-001036   010446                   18              mov r4, -(sp)    ;2
-001040   010546                   19              mov r5, -(sp)   ;0
-                                  20     		 ;add #14,sp
-001042   016601 000022            21              mov 22(sp), r1 ;col addr    
-001046   016602 000020            22              mov 20(sp), r2 ;seq addr
-001052   016600 000016            23              mov 16(sp), r0  ;length   
-001056   005003                   24              clr r3 ;seq iterator
-001060   005004                   25              clr r4 ; col index
-001062   005300                   26              dec r0 ;length - 1;
-001064   010005                   27     		 mov r0, r5
-                                  28              ;mov r0, r2
-001066   060002                   29              add r0, r2
-001070   016603 000016            30     		 mov 16(sp), r3
-001074   005203                   31     		 inc r3
-                                  32     		 
-001076   005703                   33              findnc: tst r3
-001100   001415                   34     				beq return
-001102   122112                   35     				cmpb (r1)+,(r2)
-001104   001410                   36                     beq easync
-001106   077005                   37                     sob r0, findnc
-001110   016601 000022            38     		 cyclicnc: mov 22(sp), r1
-001114   111112                   39     				  movb (r1), (r2)
-001116   005302                   40     				  dec r2
-001120   005303                   41     				  dec r3
-001122   010500                   42     				  mov r5, r0
-001124   000764                   43                       br findnc
-001126   111112                   44              easync:  movb (r1), (r2)
-001130   005303                   45     				 dec r3
-001132   000400                   46     				 br return
-001134   012605                   47     		 return: mov (sp)+, r5    ;12
-001136   012604                   48     				 mov (sp)+, r4     ;10
-001140   012603                   49     				 mov (sp)+, r3    ;6
-001142   012602                   50     				 mov (sp)+, r2    ;4
-001144   012601                   51     				 mov (sp)+, r1    ;2
-001146   012600                   52     			   	 mov (sp)+, r0
-001150   000207                   53              rts pc
-                                  54              
-001152      001    002    003     55     Collection: .byte 1, 2, 3 ,4 ,5
-            004    005                   
-001157      005    005    003     56     Sequence: .byte 5, 5, 3, 5, 5
-            005    005                   
+001024   012602                    9     	  mov (sp)+, r2
+001026   000000                   10     	  halt
+001030                            11     nextComp: ;collection           22
+                                  12              ;sequence         20
+                                  13              ;length       16
+                                  14     		 ;rts address      14
+001030   010046                   15              mov r0, -(sp)    ;12
+001032   010146                   16              mov r1, -(sp)    ;10
+001034   010246                   17              mov r2, -(sp)    ;6
+001036   010346                   18              mov r3, -(sp)    ;4
+001040   010446                   19              mov r4, -(sp)    ;2
+001042   010546                   20              mov r5, -(sp)   ;0
+                                  21     		 ;add #14,sp
+001044   016601 000022            22              mov 22(sp), r1 ;col addr    
+001050   016602 000020            23              mov 20(sp), r2 ;seq addr
+001054   016600 000016            24              mov 16(sp), r0  ;length   
+001060   005003                   25              clr r3 ;seq iterator
+001062   005004                   26              clr r4 ; col index
+001064   005300                   27              dec r0 ;length - 1;
+001066   010005                   28     		 mov r0, r5
+                                  29              ;mov r0, r2
+001070   060002                   30              add r0, r2
+001072   016603 000016            31     		 mov 16(sp), r3
+001076   005203                   32     		 inc r3
+                                  33     		 
+001100   005703                   34              findnc: tst r3
+001102   001415                   35     				beq return
+001104   122112                   36     				cmpb (r1)+,(r2)
+001106   001410                   37                     beq easync
+001110   077005                   38                     sob r0, findnc
+001112   016601 000022            39     		 cyclicnc: mov 22(sp), r1
+001116   111112                   40     				  movb (r1), (r2)
+001120   005302                   41     				  dec r2
+001122   005303                   42     				  dec r3
+001124   010500                   43     				  mov r5, r0
+001126   000764                   44                       br findnc
+001130   111112                   45              easync:  movb (r1), (r2)
+001132   005303                   46     				 dec r3
+001134   000400                   47     				 br return
+001136   012605                   48     		 return: mov (sp)+, r5    ;12
+001140   012604                   49     				 mov (sp)+, r4     ;10
+001142   012603                   50     				 mov (sp)+, r3    ;6
+001144   012602                   51     				 mov (sp)+, r2    ;4
+001146   012601                   52     				 mov (sp)+, r1    ;2
+001150   012600                   53     			   	 mov (sp)+, r0
+001152   000207                   54              rts pc
+                                  55              
+001154      004    010    015     56     Collection: .byte 4, 10, 15 
+001157      004    010    015     57     Sequence: .byte 4, 10, 15
 
 
 	S Y M B O L   T A B L E
@@ -70,10 +69,10 @@ Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
 SYMBOL    VALUE   TYPE
 ------    -----   ----
 main      001000  text     
-Collecti  001152  text     
+Collecti  001154  text     
 Sequence  001157  text     
-nextComp  001026  text     
-findnc    001076  text     
-return    001134  text     
-easync    001126  text     
-cyclicnc  001110  text     
+nextComp  001030  text     
+findnc    001100  text     
+return    001136  text     
+easync    001130  text     
+cyclicnc  001112  text     

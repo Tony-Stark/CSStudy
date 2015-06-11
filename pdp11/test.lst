@@ -57,13 +57,18 @@ Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
 001162   012600                   51     				   mov (sp)+, r0
 001164   000205                   52     	 rts r5
                                   53     	  
-001166                            54     . = torg +5000
-005000      040    040    151     55     .ascii<  i love atam>
-            040    154    157            
-            166    145    040            
-            141    164    141            
-            155                          
-                                  56     
+001166      120    145    162     54     Dictionary:.ascii<Perfect@job@is@Secret@top@> 
+            146    145    143            
+            164    100    152            
+            157    142    100            
+            151    163    100            
+            123    145    143            
+            162    145    164            
+            100    164    157            
+            160    100                   
+001220                            55     .even
+001220   000005                   56     DicLen:.word 5
+                                  57     
 
 
 	S Y M B O L   T A B L E
@@ -79,3 +84,5 @@ while1p1  001062  text
 while1p2  001076  text     
 while2gw  001134  text     
 returngw  001156  text     
+Dictiona  001166  text     
+DicLen    001220  text     

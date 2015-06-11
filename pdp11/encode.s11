@@ -1,10 +1,36 @@
 . = torg + 1000
-main: mov #010, -(sp)
-	  mov #Test1, -(sp)
+main: mov #Secret, -(sp)
+	  mov SecretLen, -(sp)
+	        mov #Output, -(sp)
       mov #Matrix, -(sp)
-	  jsr pc, decode
-	  halt
 
+	  jsr pc, decodeSentence
+	  halt
+decodeSentence: mov r0, -(sp)
+				mov r1, -(sp)
+				mov r2, -(sp)
+				mov r3, -(sp)
+				mov r4, -(sp)
+				mov r5, -(sp)
+mov 22(sp),r0
+mov 24(sp), r1
+mov 20(sp), r2
+for1ds: movb (r1)+, r3
+		bic #177400 ,r3
+		mov r3, -(sp)
+	    mov r2, -(sp)
+        mov 22(sp), -(sp)
+		jsr pc, decode
+		add #6, sp
+		inc r2
+		sob r0, for1ds
+		mov (sp)+, r5
+		mov (sp)+, r4
+		mov (sp)+, r3
+		mov (sp)+, r2
+		mov (sp)+, r1
+		mov (sp)+, r0
+		rts pc
 decode: mov r1, -(sp)	;push r1 on stack 10
 	mov r2, -(sp)		;push r2 on stack 6
 	mov r3, -(sp)		;push r3 on stack 4
@@ -131,5 +157,28 @@ deFinal:
 	rts pc
 	
 	
-	Matrix: .byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17
-	Test1: .byte 0
+	
+Keys:		.byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17      ;M1
+		.byte 17, 2, 15, 11, 3, 10, 5, 13, 1, 4, 14, 12, 0, 6, 7, 16      ;M2
+KeysLen:	.word 2
+Secret:
+  .byte 010, 214, 037, 210, 214, 216, 031, 277, 005, 214,216,037, 214, 031, 261
+.even
+SecretLen:	.word 15.
+TextList:        .word Txt1, 11., 0, Out1, Node1
+Dictionary:	.ascii<Perfect@job@is@Secret@top@> 
+.even
+DicLen:	.word 5
+Matrix:	.byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17      ;M
+
+Node1:	.word Txt2, 4, 0, Out2, Node2
+Node2:	.word Txt3, 4, 1, Out3, 0
+Txt1:		.ascii<I love atam>
+Txt2:		.ascii <Atam>
+Txt3:		.byte 044, 214, 044, 302
+
+.even
+Output: 	.blkw 20
+Out1: 	.blkw 10
+Out2: 	.blkw 10
+Out3: 	.blkw 10

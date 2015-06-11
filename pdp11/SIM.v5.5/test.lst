@@ -9,61 +9,75 @@ Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
 001004   005746                    3     	  tst -(sp)
 001006   005746                    4     	  tst -(sp)
 001010   004567 000014             5     	  jsr r5, getWord
-001014   005000                    6     	  .word 5000
-001016   000013                    7     	  .word 11.
+001014   005000                    6     	  .word poop
+001016   000017                    7     	  .word 17
 001020   000002                    8     	  .word 2.
 001022   012600                    9     	  mov (sp)+, r0
 001024   012601                   10     	  mov (sp)+, r1
 001026   000000                   11     	  halt
-                                  12     
+                                  12     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 001030   010046                   13     getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
 001032   010146                   14     		 mov r1, -(sp) ;;
 001034   010246                   15     		 mov r2, -(sp) ;;
-001036   012500                   16     		 mov (r5)+, r0 ;sentence address
-001040   012501                   17     		 mov (r5)+, r1 ;sentence length
-001042   012502                   18     		 mov (r5)+, r2 ;i
-001044   005702                   19     		 while1gw: tst r2
-001046   001426                   20     				   beq findLengthgw
-001050   121027 000040            21     				   cmpb (r0), #40
-001054   001402                   22     				   beq while1p1gw
-001056   005302                   23     				   dec r2
-001060   000406                   24     				   br while1p2gw
-001062   005301                   25     				   while1p1gw: dec r1
-001064   122027 000040            26     				   		       cmpb(r0)+, #40
-001070   001774                   27     				   		       beq while1p1gw
-001072   005300                   28     				   		       dec r0
-001074   000763                   29     				   		       br while1gw
-001076   005702                   30     				   while1p2gw: tst r2
-001100   001411                   31     							   beq findLengthgw
-001102   005701                   32     							   tst r1
-001104   001407                   33     							   beq findLengthgw
-001106   005301                   34     							   dec r1
-001110   122027 000040            35     				   		       cmpb (r0)+, #40
-001114   001370                   36     				   		       bne while1p2gw
-001116   005300                   37     							   dec r0
-001120   005201                   38     							   inc r1
-001122   000750                   39     				   			   br while1gw
-001124   010066 000012            40     		 findLengthgw: 	mov r0, 12(sp)
-001130   005066 000010            41     						clr 10(sp)
-001134   122027 000040            42     						while2gw: cmpb (r0)+, #40
-001140   001406                   43     								  beq returngw
-001142   005701                   44     								  tst r1
-001144   001404                   45     								  beq returngw
-001146   005266 000010            46     								  inc 10(sp)
-001152   005301                   47     								  dec r1
-001154   000767                   48     								  br while2gw
-001156   012602                   49     		 returngw: mov (sp)+, r2
-001160   012601                   50     				   mov (sp)+, r1
-001162   012600                   51     				   mov (sp)+, r0
-001164   000205                   52     	 rts r5
-                                  53     	  
-001166                            54     . = torg +5000
-005000      040    040    151     55     .ascii<  i love atam>
-            040    154    157            
-            166    145    040            
-            141    164    141            
-            155                          
-                                  56     
+001036   010346                   16     		 mov r3, -(sp) ;;
+001040   010446                   17     		 mov r4, -(sp) ;;
+001042   012500                   18     		 mov (r5)+, r0 ;sentence address
+001044   012501                   19     		 mov (r5)+, r1 ;sentence length
+001046   012502                   20     		 mov (r5)+, r2 ;i
+001050   005003                   21              clr r3
+                                  22     				   
+001052   121027 000040            23     		eat_space: cmpb (r0), #40
+001056   001003                   24     				   bne worddd
+001060   005200                   25     				   inc r0
+001062   005301                   26     				   dec r1
+001064   000772                   27     				   br eat_space
+                                  28     				   
+001066   020227 000001            29     		worddd: cmp r2,#1
+001072   001410                   30                   beq shava
+001074   005302                   31     			  dec r2
+001076   121027 000040            32             reach_space:  cmpb (r0), #40
+001102   001403                   33     				   beq spaaaace
+001104   005200                   34     				   inc r0
+001106   005301                   35     				   dec r1
+001110   000772                   36     				   br reach_space
+                                  37     
+001112   000757                   38             spaaaace: br eat_space
+001114   010066 000016            39             shava:     mov r0,16(sp)
+001120   121027 000040            40     		callen:    cmpb (r0), #40
+001124   001405                   41     				   beq ddddone
+001126   005203                   42     				   inc r3
+001130   005200                   43     				   inc r0
+001132   005301                   44     				   dec r1
+001134   001401                   45     				   beq ddddone
+001136   000770                   46     				   br callen
+                                  47     				   
+001140   010366 000014            48     		ddddone:  mov r3,14(sp) 		   
+                                  49     				   
+001144   012604                   50     		 returngw: mov (sp)+, r4
+001146   012603                   51     				   mov (sp)+, r3
+001150   012602                   52     				   mov (sp)+, r2
+001152   012601                   53     				   mov (sp)+, r1
+001154   012600                   54     				   mov (sp)+, r0
+001156   000205                   55     	 rts r5
+001160                            56     . =  torg + 5000
+005000      110    141    166     57     poop: .ascii<Have a good job>
+            145    040    141            
+            040    147    157            
+            157    144    040            
+            152    157    142            
+                                  58     
+005017      120    145    162     59     Dictionary:.ascii<Perfect@job@is@Secret@top@> 
+            146    145    143            
+            164    100    152            
+            157    142    100            
+            151    163    100            
+            123    145    143            
+            162    145    164            
+            100    164    157            
+            160    100                   
+005051      000                   60     .even
+005052   000005                   61     DicLen:.word 5
+                                  62     
 
 
 	S Y M B O L   T A B L E
@@ -73,9 +87,14 @@ SYMBOL    VALUE   TYPE
 ------    -----   ----
 main      001000  text     
 getWord   001030  text     
-while1gw  001044  text     
-findLeng  001124  text     
-while1p1  001062  text     
-while1p2  001076  text     
-while2gw  001134  text     
-returngw  001156  text     
+poop      005000  text     
+eat_spac  001052  text     
+worddd    001066  text     
+shava     001114  text     
+reach_sp  001076  text     
+spaaaace  001112  text     
+callen    001120  text     
+ddddone   001140  text     
+returngw  001144  text     
+Dictiona  005017  text     
+DicLen    005052  text     

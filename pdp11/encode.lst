@@ -5,145 +5,224 @@ Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
 	=========================================
 
 000000                             1     . = torg + 1000
-001000   012746 000010             2     main: mov #010, -(sp)
-001004   012746 001462             3     	  mov #Test1, -(sp)
-001010   012746 001442             4           mov #Matrix, -(sp)
-001014   004767 000002             5     	  jsr pc, decode
-001020   000000                    6     	  halt
-                                   7     
-001022   010146                    8     decode: mov r1, -(sp)	;push r1 on stack 10
-001024   010246                    9     	mov r2, -(sp)		;push r2 on stack 6
-001026   010346                   10     	mov r3, -(sp)		;push r3 on stack 4
-001030   010446                   11     	mov r4, -(sp)		;push r4 on stack 2
-001032   010546                   12     	mov r5, -(sp)		;push r5 on stack 0
-                                  13     	;tst -(sp) 			;allocate memory for isLegal result
-                                  14     	;mov 14(sp), -(sp)	;push matrix on stack
-                                  15     	;jsr pc, isLegal
-                                  16     	;tst (sp)+			;check result
-                                  17     	;beq decodeIllegal	;if illegal, save byte in output address unchanged
-                                  18     	;tst (sp)+			;clear additional matrix address from stack
-001034   016601 000014            19     	mov 14(sp), r1     	;r1 now has the address of the first key
-001040   116604 000020            20     	movb 20(sp), r4		;the address of the first Text byte is stored in r4
-001044   042704 177400            21     	bic #177400, r4
-001050   110402                   22     	movb r4, r2			;move value of current Text byte to r2
-001052   042702 177760            23     	bic #177760, r2		;store y value in r2
-001056   110403                   24     	movb r4, r3 		;move value of current Text byte to r3
-001060   042703 177417            25     	bic #177417, r3			;clear first 4 bits
-001064   072327 177774            26     	ash #-4, r3			;store x value in r3
-001070   000400                   27     	br deyfind
-                                  28     	
-                                  29     ;yfind finds the address of the key which equals to y
-001072   112104                   30     deyfind:  movb (r1)+, r4		;first map key is stored in r4, and r1 is advanced by 1
-001074   042704 177400            31     	bic #177400, r4
-001100   020402                   32     	cmp r4, r2				;if y part is equal to the value of the key, continue
-001102   001373                   33     	bne deyfind
-001104   062701 177777            34     	add #-1, r1				;r1 is decremented to account for the previous incrementation 
-001110   010104                   35     	mov r1, r4				;r4 stores the address of the y key
-001112   016601 000014            36     	mov 14(sp), r1		;reset key pointer
-                                  37     	
-                                  38     ;dexfind finds the address of the key which equals to x
-001116   112105                   39     dexfind:  movb (r1)+, r5		;first map key is stored in r5, and r1 is advanced by 1
-001120   042705 177400            40     	bic #177400 ,r5
-001124   020503                   41     	cmp r5, r3				;if x part is equal to the value of the key, continue
-001126   001373                   42     	bne dexfind
-001130   062701 177777            43     	add #-1, r1				;r1 is decremented to account for the previous incrementation
-001134   010105                   44     	mov r1, r5 				;r5 stores address of x key
-001136   016601 000014            45     	mov 14(sp), r1		;reset key pointer
-                                  46     
-                                  47     ;diff calculates the location of x, y
-001142   166604 000014            48     dediff:   sub 14(sp), r4	;r4 now has the serial place of y in the key map
-001146   166605 000014            49     	sub 14(sp), r5		;r5 now has the serial place of x in the key map
-001152   010403                   50     	mov r4, r3				;r3 now has the serial place of y in the key map
-001154   005002                   51     	clr r2					;r2 is cleared to enable division of r2, r3
-001156   005004                   52     	clr r4					;r4 is cleared to enable division of r4, r5
-001160   071227 000004            53     	div #4, r2				;r2 stores the row of y, r3 stores the column of y
-001164   071427 000004            54     	div #4, r4				;r4 stores the row of x, r5 stores the column of x
-001170   020204                   55     	cmp r2, r4			;if rows are equal, proceed to case A
-001172   001403                   56     	beq dCaseA			
-001174   020305                   57     	cmp r3, r5				;if columns are equal, proceed to case B
-001176   001422                   58     	beq dCaseB
-001200   000442                   59     	br deCaseC				;else, proceed to case C
-                                  60     
-001202   020327 000000            61     dCaseA:  cmp r3, #0		;if column of y is 3, it will be cleared in order to enable cyclic movement
-001206   001410                   62     	beq dSubr3A
-001210   020527 000000            63     	cmp r5, #0			;if column of x is 3, it will be cleared in order to enable cyclic movement
-001214   001410                   64     	beq dSubr5A
-001216   162703 000001            65     	sub #1, r3				;y is moved right in a cyclic order
-001222   162705 000001            66     	sub #1, r5				;x is moved right in a cyclic order
-001226   000441                   67     	br degetLower				;proceed to calculate value of W
-001230   012703 000004            68     dSubr3A: mov #4, r3				;column of y is cleared to enable cyclic movement
-001234   000762                   69     		br dCaseA
-001236   012705 000004            70     dSubr5A: mov #4, r5				;column of x is cleared to enable cyclic movement
-001242   000757                   71     		br dCaseA
-                                  72     		
-001244   020227 000000            73     dCaseB:  cmp r2, #0			;if row of y is 3, it will be cleared in order to enable cyclic movement
-001250   001410                   74     	beq dSubr2B
-001252   020427 000000            75     	cmp r4, #0				;if row of x is 3, it will be cleared in order to enable cyclic movement
-001256   001410                   76     	beq dSubr4B
-001260   162702 000001            77     	sub #1, r2				;y is moved down in a cyclic order
-001264   162704 000001            78     	sub #1, r4				;x is moved down in a cyclic order
-001270   000420                   79     	br degetLower				;proceed to calculate value of W
-001272   012702 000004            80     dSubr2B: mov #4, r2				;row of y is cleared to enable cyclic movement
-001276   000762                   81     		br dCaseB
-001300   012704 000004            82     dSubr4B: mov #4, r4				;row of x is cleared to enable cyclic movement
-001304   000757                   83     		br dCaseB
-                                  84     		
-001306   110301                   85     deCaseC: movb r3, r1
-001310   042701 177400            86     	bic #177400, r1
-                                  87     			;column of y is stored in a temp register
-001314   110503                   88     	movb r5, r3	
-001316   042703 177400            89     	bic #177400, r3
-                                  90     	;column of y is changed to the column of x
-001322   110105                   91     	movb r1, r5	
-001324   042705 177400            92     	bic #177400, r5
-                                  93     	;column of x is changed to the column of y
-001330   000400                   94     	br degetLower				;proceed to calculate value of W
-                                  95     
-                                  96     ;gets lower 4 bits of output
-001332   020227 000000            97     degetLower: cmp r2, #0		;if row of lower 4 bits is zero, the loop is finished
-001336   001404                   98     	beq degetUpper
-001340   062703 000004            99     	add #4, r3				;4 is added to the r3 register to get the place of the lower bits in the map
-001344   077206                  100     	sob r2, degetLower
-001346   000400                  101     	br degetUpper				;proceed to calculate upper 4 bits
-                                 102     
-                                 103     ;gets higher 4 bits of output
-001350   020427 000000           104     degetUpper: cmp r4, #0		;if row of higher 4 bits is zero, the loop is finished
-001354   001404                  105     	beq deFinal
-001356   062705 000004           106     	add #4, r5				;4 is added to the r5 register to get the place of the higher bits in the map
-001362   077406                  107     	sob r4, degetUpper
-001364   000400                  108     	br deFinal				;the serial place of the lower 4 bits in the map is stored in r3, and that of the higher - in r5
-                                 109     	
-                                 110     ;calculates output byte and stores it in the output label
-                                 111     ;checks if program has completed its operation
-001366                           112     deFinal:
-001366   066603 000014           113     	add 14(sp), r3		;the address of the first key is added to r3 to get the address of the value of lower 4 bits
-001372   066605 000014           114     	add 14(sp), r5		;the address of the first key is added to r5 to get the address of the value of upper 4 bits
-001376   111302                  115     	movb (r3), r2
-001400   042702 177400           116     	bic #177400 ,r2
-                                 117     	;r2 now stores value of lower 4 bits
-001404   111504                  118     	movb (r5), r4	
-001406   042704 177400           119     	bic #177400, r4
-                                 120     	;r4 now stores value of higher 4 bits
-001412   072427 000004           121     	ash #4, r4				;r4 is shifted 4 times to the left to enable addition of lower 4 bits
-001416   060204                  122     	add r2, r4				;r4 now stores 8 bits: first the lower 4, and then the upper 4. This is the needed result.
-001420   016601 000016           123     	mov 16(sp), r1			;address of first Output byte is added to r1
-001424   110411                  124     	movb r4, (r1)	
-                                 125     	;the encryption/decryption result is saved in the Output label 
-001426   012605                  126     	mov (sp)+, r5
-001430   012604                  127     	mov (sp)+, r4
-001432   012603                  128     	mov (sp)+, r3
-001434   012602                  129     	mov (sp)+, r2
-001436   012601                  130     	mov (sp)+, r1
-001440   000207                  131     	rts pc
-                                 132     	
-                                 133     	
-001442      012    006    010    134     	Matrix: .byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17
+001000   012746 001610             2     main: mov #Secret, -(sp)
+001004   016746 000620             3     	  mov SecretLen, -(sp)
+001010   012746 001770             4     	        mov #Output, -(sp)
+001014   012746 001700             5           mov #Matrix, -(sp)
+                                   6     
+001020   004767 000002             7     	  jsr pc, decodeSentence
+001024   000000                    8     	  halt
+001026   010046                    9     decodeSentence: mov r0, -(sp)
+001030   010146                   10     				mov r1, -(sp)
+001032   010246                   11     				mov r2, -(sp)
+001034   010346                   12     				mov r3, -(sp)
+001036   010446                   13     				mov r4, -(sp)
+001040   010546                   14     				mov r5, -(sp)
+001042   016600 000022            15     mov 22(sp),r0
+001046   016601 000024            16     mov 24(sp), r1
+001052   016602 000020            17     mov 20(sp), r2
+001056   112103                   18     for1ds: movb (r1)+, r3
+001060   042703 177400            19     		bic #177400 ,r3
+001064   010346                   20     		mov r3, -(sp)
+001066   010246                   21     	    mov r2, -(sp)
+001070   016646 000022            22             mov 22(sp), -(sp)
+001074   004767 000026            23     		jsr pc, decode
+001100   062706 000006            24     		add #6, sp
+001104   005202                   25     		inc r2
+001106   077015                   26     		sob r0, for1ds
+001110   012605                   27     		mov (sp)+, r5
+001112   012604                   28     		mov (sp)+, r4
+001114   012603                   29     		mov (sp)+, r3
+001116   012602                   30     		mov (sp)+, r2
+001120   012601                   31     		mov (sp)+, r1
+001122   012600                   32     		mov (sp)+, r0
+001124   000207                   33     		rts pc
+001126   010146                   34     decode: mov r1, -(sp)	;push r1 on stack 10
+001130   010246                   35     	mov r2, -(sp)		;push r2 on stack 6
+001132   010346                   36     	mov r3, -(sp)		;push r3 on stack 4
+001134   010446                   37     	mov r4, -(sp)		;push r4 on stack 2
+001136   010546                   38     	mov r5, -(sp)		;push r5 on stack 0
+                                  39     	;tst -(sp) 			;allocate memory for isLegal result
+                                  40     	;mov 14(sp), -(sp)	;push matrix on stack
+                                  41     	;jsr pc, isLegal
+                                  42     	;tst (sp)+			;check result
+                                  43     	;beq decodeIllegal	;if illegal, save byte in output address unchanged
+                                  44     	;tst (sp)+			;clear additional matrix address from stack
+001140   016601 000014            45     	mov 14(sp), r1     	;r1 now has the address of the first key
+001144   116604 000020            46     	movb 20(sp), r4		;the address of the first Text byte is stored in r4
+001150   042704 177400            47     	bic #177400, r4
+001154   110402                   48     	movb r4, r2			;move value of current Text byte to r2
+001156   042702 177760            49     	bic #177760, r2		;store y value in r2
+001162   110403                   50     	movb r4, r3 		;move value of current Text byte to r3
+001164   042703 177417            51     	bic #177417, r3			;clear first 4 bits
+001170   072327 177774            52     	ash #-4, r3			;store x value in r3
+001174   000400                   53     	br deyfind
+                                  54     	
+                                  55     ;yfind finds the address of the key which equals to y
+001176   112104                   56     deyfind:  movb (r1)+, r4		;first map key is stored in r4, and r1 is advanced by 1
+001200   042704 177400            57     	bic #177400, r4
+001204   020402                   58     	cmp r4, r2				;if y part is equal to the value of the key, continue
+001206   001373                   59     	bne deyfind
+001210   062701 177777            60     	add #-1, r1				;r1 is decremented to account for the previous incrementation 
+001214   010104                   61     	mov r1, r4				;r4 stores the address of the y key
+001216   016601 000014            62     	mov 14(sp), r1		;reset key pointer
+                                  63     	
+                                  64     ;dexfind finds the address of the key which equals to x
+001222   112105                   65     dexfind:  movb (r1)+, r5		;first map key is stored in r5, and r1 is advanced by 1
+001224   042705 177400            66     	bic #177400 ,r5
+001230   020503                   67     	cmp r5, r3				;if x part is equal to the value of the key, continue
+001232   001373                   68     	bne dexfind
+001234   062701 177777            69     	add #-1, r1				;r1 is decremented to account for the previous incrementation
+001240   010105                   70     	mov r1, r5 				;r5 stores address of x key
+001242   016601 000014            71     	mov 14(sp), r1		;reset key pointer
+                                  72     
+                                  73     ;diff calculates the location of x, y
+001246   166604 000014            74     dediff:   sub 14(sp), r4	;r4 now has the serial place of y in the key map
+001252   166605 000014            75     	sub 14(sp), r5		;r5 now has the serial place of x in the key map
+001256   010403                   76     	mov r4, r3				;r3 now has the serial place of y in the key map
+001260   005002                   77     	clr r2					;r2 is cleared to enable division of r2, r3
+001262   005004                   78     	clr r4					;r4 is cleared to enable division of r4, r5
+001264   071227 000004            79     	div #4, r2				;r2 stores the row of y, r3 stores the column of y
+001270   071427 000004            80     	div #4, r4				;r4 stores the row of x, r5 stores the column of x
+001274   020204                   81     	cmp r2, r4			;if rows are equal, proceed to case A
+001276   001403                   82     	beq dCaseA			
+001300   020305                   83     	cmp r3, r5				;if columns are equal, proceed to case B
+001302   001422                   84     	beq dCaseB
+001304   000442                   85     	br deCaseC				;else, proceed to case C
+                                  86     
+001306   020327 000000            87     dCaseA:  cmp r3, #0		;if column of y is 3, it will be cleared in order to enable cyclic movement
+001312   001410                   88     	beq dSubr3A
+001314   020527 000000            89     	cmp r5, #0			;if column of x is 3, it will be cleared in order to enable cyclic movement
+001320   001410                   90     	beq dSubr5A
+001322   162703 000001            91     	sub #1, r3				;y is moved right in a cyclic order
+001326   162705 000001            92     	sub #1, r5				;x is moved right in a cyclic order
+001332   000441                   93     	br degetLower				;proceed to calculate value of W
+001334   012703 000004            94     dSubr3A: mov #4, r3				;column of y is cleared to enable cyclic movement
+001340   000762                   95     		br dCaseA
+001342   012705 000004            96     dSubr5A: mov #4, r5				;column of x is cleared to enable cyclic movement
+001346   000757                   97     		br dCaseA
+                                  98     		
+001350   020227 000000            99     dCaseB:  cmp r2, #0			;if row of y is 3, it will be cleared in order to enable cyclic movement
+001354   001410                  100     	beq dSubr2B
+001356   020427 000000           101     	cmp r4, #0				;if row of x is 3, it will be cleared in order to enable cyclic movement
+001362   001410                  102     	beq dSubr4B
+001364   162702 000001           103     	sub #1, r2				;y is moved down in a cyclic order
+001370   162704 000001           104     	sub #1, r4				;x is moved down in a cyclic order
+001374   000420                  105     	br degetLower				;proceed to calculate value of W
+001376   012702 000004           106     dSubr2B: mov #4, r2				;row of y is cleared to enable cyclic movement
+001402   000762                  107     		br dCaseB
+001404   012704 000004           108     dSubr4B: mov #4, r4				;row of x is cleared to enable cyclic movement
+001410   000757                  109     		br dCaseB
+                                 110     		
+001412   110301                  111     deCaseC: movb r3, r1
+001414   042701 177400           112     	bic #177400, r1
+                                 113     			;column of y is stored in a temp register
+001420   110503                  114     	movb r5, r3	
+001422   042703 177400           115     	bic #177400, r3
+                                 116     	;column of y is changed to the column of x
+001426   110105                  117     	movb r1, r5	
+001430   042705 177400           118     	bic #177400, r5
+                                 119     	;column of x is changed to the column of y
+001434   000400                  120     	br degetLower				;proceed to calculate value of W
+                                 121     
+                                 122     ;gets lower 4 bits of output
+001436   020227 000000           123     degetLower: cmp r2, #0		;if row of lower 4 bits is zero, the loop is finished
+001442   001404                  124     	beq degetUpper
+001444   062703 000004           125     	add #4, r3				;4 is added to the r3 register to get the place of the lower bits in the map
+001450   077206                  126     	sob r2, degetLower
+001452   000400                  127     	br degetUpper				;proceed to calculate upper 4 bits
+                                 128     
+                                 129     ;gets higher 4 bits of output
+001454   020427 000000           130     degetUpper: cmp r4, #0		;if row of higher 4 bits is zero, the loop is finished
+001460   001404                  131     	beq deFinal
+001462   062705 000004           132     	add #4, r5				;4 is added to the r5 register to get the place of the higher bits in the map
+001466   077406                  133     	sob r4, degetUpper
+001470   000400                  134     	br deFinal				;the serial place of the lower 4 bits in the map is stored in r3, and that of the higher - in r5
+                                 135     	
+                                 136     ;calculates output byte and stores it in the output label
+                                 137     ;checks if program has completed its operation
+001472                           138     deFinal:
+001472   066603 000014           139     	add 14(sp), r3		;the address of the first key is added to r3 to get the address of the value of lower 4 bits
+001476   066605 000014           140     	add 14(sp), r5		;the address of the first key is added to r5 to get the address of the value of upper 4 bits
+001502   111302                  141     	movb (r3), r2
+001504   042702 177400           142     	bic #177400 ,r2
+                                 143     	;r2 now stores value of lower 4 bits
+001510   111504                  144     	movb (r5), r4	
+001512   042704 177400           145     	bic #177400, r4
+                                 146     	;r4 now stores value of higher 4 bits
+001516   072427 000004           147     	ash #4, r4				;r4 is shifted 4 times to the left to enable addition of lower 4 bits
+001522   060204                  148     	add r2, r4				;r4 now stores 8 bits: first the lower 4, and then the upper 4. This is the needed result.
+001524   016601 000016           149     	mov 16(sp), r1			;address of first Output byte is added to r1
+001530   110411                  150     	movb r4, (r1)	
+                                 151     	;the encryption/decryption result is saved in the Output label 
+001532   012605                  152     	mov (sp)+, r5
+001534   012604                  153     	mov (sp)+, r4
+001536   012603                  154     	mov (sp)+, r3
+001540   012602                  155     	mov (sp)+, r2
+001542   012601                  156     	mov (sp)+, r1
+001544   000207                  157     	rts pc
+                                 158     	
+                                 159     	
+                                 160     	
+001546      012    006    010    161     Keys:		.byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17      ;M1
             015    001    016            
             003    007    004            
             014    005    011            
             002    013    000            
             017                          
-001462      000                  135     	Test1: .byte 0
+001566      017    002    015    162     		.byte 17, 2, 15, 11, 3, 10, 5, 13, 1, 4, 14, 12, 0, 6, 7, 16      ;M2
+            011    003    010            
+            005    013    001            
+            004    014    012            
+            000    006    007            
+            016                          
+001606   000002                  163     KeysLen:	.word 2
+001610                           164     Secret:
+001610      010    214    037    165       .byte 010, 214, 037, 210, 214, 216, 031, 277, 005, 214,216,037, 214, 031, 261
+            210    214    216            
+            031    277    005            
+            214    216    037            
+            214    031    261            
+001627      000                  166     .even
+001630   000017                  167     SecretLen:	.word 15.
+001632   001744 000013 000000    168     TextList:        .word Txt1, 11., 0, Out1, Node1
+         002030 001720                   
+001644      120    145    162    169     Dictionary:	.ascii<Perfect@job@is@Secret@top@> 
+            146    145    143            
+            164    100    152            
+            157    142    100            
+            151    163    100            
+            123    145    143            
+            162    145    164            
+            100    164    157            
+            160    100                   
+001676                           170     .even
+001676   000005                  171     DicLen:	.word 5
+001700      012    006    010    172     Matrix:	.byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17      ;M
+            015    001    016            
+            003    007    004            
+            014    005    011            
+            002    013    000            
+            017                          
+                                 173     
+001720   001757 000004 000000    174     Node1:	.word Txt2, 4, 0, Out2, Node2
+         002050 001732                   
+001732   001763 000004 000001    175     Node2:	.word Txt3, 4, 1, Out3, 0
+         002070 000000                   
+001744      111    040    154    176     Txt1:		.ascii<I love atam>
+            157    166    145            
+            040    141    164            
+            141    155                   
+001757      101    164    141    177     Txt2:		.ascii <Atam>
+            155                          
+001763      044    214    044    178     Txt3:		.byte 044, 214, 044, 302
+            302                          
+                                 179     
+001767      000                  180     .even
+001770   000000 000000 000000    181     Output: 	.blkw 20
+002030   000000 000000 000000    182     Out1: 	.blkw 10
+002050   000000 000000 000000    183     Out2: 	.blkw 10
+002070   000000 000000 000000    184     Out3: 	.blkw 10
 
 
 	S Y M B O L   T A B L E
@@ -152,19 +231,36 @@ Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
 SYMBOL    VALUE   TYPE
 ------    -----   ----
 main      001000  text     
-Test1     001462  text     
-Matrix    001442  text     
-decode    001022  text     
-deyfind   001072  text     
-dexfind   001116  text     
-dediff    001142  text     
-dCaseA    001202  text     
-dCaseB    001244  text     
-deCaseC   001306  text     
-dSubr3A   001230  text     
-dSubr5A   001236  text     
-degetLow  001332  text     
-dSubr2B   001272  text     
-dSubr4B   001300  text     
-degetUpp  001350  text     
-deFinal   001366  text     
+Secret    001610  text     
+SecretLe  001630  text     
+Output    001770  text     
+Matrix    001700  text     
+decodeSe  001026  text     
+for1ds    001056  text     
+decode    001126  text     
+deyfind   001176  text     
+dexfind   001222  text     
+dediff    001246  text     
+dCaseA    001306  text     
+dCaseB    001350  text     
+deCaseC   001412  text     
+dSubr3A   001334  text     
+dSubr5A   001342  text     
+degetLow  001436  text     
+dSubr2B   001376  text     
+dSubr4B   001404  text     
+degetUpp  001454  text     
+deFinal   001472  text     
+Keys      001546  text     
+KeysLen   001606  text     
+TextList  001632  text     
+Txt1      001744  text     
+Out1      002030  text     
+Node1     001720  text     
+Dictiona  001644  text     
+DicLen    001676  text     
+Txt2      001757  text     
+Out2      002050  text     
+Node2     001732  text     
+Txt3      001763  text     
+Out3      002070  text     

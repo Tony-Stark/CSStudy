@@ -4,8 +4,9 @@ main: mov #main, sp
 ;add #100, (sp)
 	  tst -(sp)
 	  mov #X, -(sp)
-	  mov #9., -(sp)
+	  mov #3., -(sp)
 	  jsr pc, isWord
+	  add #4,sp
 	  mov (sp)+, r0
 	  halt
 
@@ -50,7 +51,6 @@ notFound: add #-18, sp
 	mov (sp)+, r0
 	mov (sp), 4(sp)
 	mov #0, 6(sp)
-	cmp (sp)+, (sp)+
 	rts pc
 wordFound: add #-18, sp
 	mov (sp)+, r5
@@ -61,10 +61,9 @@ wordFound: add #-18, sp
 	mov (sp)+, r0
 	mov (sp), 4(sp)
 	mov #1, 6(sp)
-	cmp (sp)+, (sp)+
 	rts pc
 Dictionary: .ascii<Perfect@job@is@Secret@top@> 
 .even
 DicLen: .word 5
-X: .ascii<YuvalSlut>
+X: .ascii<bob>
 .even

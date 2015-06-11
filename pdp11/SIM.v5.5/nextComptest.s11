@@ -2,11 +2,12 @@
 . = torg + 1000
 main: mov #Collection, -(sp)
       mov #Sequence, -(sp)
-	  mov #5, -(sp)
+	  mov #3, -(sp)
 	  jsr pc, nextComp
 	  mov (sp)+, r0
 	  mov (sp)+, r1
-	  mov (sp), r2
+	  mov (sp)+, r2
+	  halt
 nextComp: ;collection           22
          ;sequence         20
          ;length       16
@@ -52,5 +53,5 @@ nextComp: ;collection           22
 			   	 mov (sp)+, r0
          rts pc
          
-Collection: .byte 1, 2, 3 ,4 ,5
-Sequence: .byte 5, 5, 3, 5, 5
+Collection: .byte 4, 10, 15 
+Sequence: .byte 4, 10, 15
