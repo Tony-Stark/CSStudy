@@ -1,0 +1,71 @@
+Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
+
+
+	S O U R C E    F I L E    :    islegaltest.s11
+	==============================================
+
+000000                             1     . = torg + 1000
+001000   005746                    2     main: tst -(sp)
+001002   012746 001152             3     	  mov #Matrix, -(sp)
+001006   004767 000004             4     	  jsr pc, isLegal
+001012   005726                    5     	  tst (sp)+
+001014   012600                    6     	  mov (sp)+, r0
+                                   7     
+001016   010046                    8     isLegal: 	mov r0, -(sp) ;10
+001020   010146                    9     	mov r1, -(sp) ;6
+001022   010246                   10     	mov r2, -(sp) ;4
+001024   010346                   11     	mov r3, -(sp) ;2
+001026   010446                   12     	mov r4, -(sp) ;0
+001030   016600 000014            13     	mov 14(sp), r0			;address of first matrix is stored in r0
+001034   010004                   14     	mov r0, r4				;r4 won't be changed
+001036   005001                   15     	clr r1					;r1 cleared and prepared for storing the current element
+001040   005002                   16     	clr r2					;r2 holds the matrix index
+001042   000400                   17     	br isLegalLoop
+001044   112003                   18     isLegalLoop: movb (r0)+, r3 ;r3 stores the matrix element value
+001046   020301                   19     	cmp r3, r1				;check if matrix element holds the checked key
+001050   001406                   20     	beq isLegalAux			;if index element equals key, continue
+001052   020227 000017            21     	cmp r2, #17
+001056   001413                   22     	beq isIllegal
+001060   062702 000001            23     	add #1, r2				;matrix index is 
+001064   000767                   24     	br isLegalLoop
+001066   020127 000017            25     isLegalAux: cmp r1, #17
+001072   001416                   26     	beq indeedLegal
+001074   062701 000001            27     	add #1, r1 				;increment index
+001100   005002                   28     	clr r2					;matrix index is cleared
+001102   010400                   29     	mov r4, r0
+001104   000757                   30     	br isLegalLoop
+001106                            31     isIllegal:
+001106   012604                   32     	mov (sp)+, r4
+001110   012603                   33     	mov (sp)+, r3
+001112   012602                   34     	mov (sp)+, r2
+001114   012601                   35     	mov (sp)+, r1
+001116   012600                   36     	mov (sp)+, r0
+001120   012766 000000 000004     37     	mov #0, 4(sp)
+001126   000207                   38     	rts pc
+001130                            39     indeedLegal:
+001130   012604                   40     	mov (sp)+, r4
+001132   012603                   41     	mov (sp)+, r3
+001134   012602                   42     	mov (sp)+, r2
+001136   012601                   43     	mov (sp)+, r1
+001140   012600                   44     	mov (sp)+, r0
+001142   012766 000001 000004     45     	mov #1, 4(sp)
+001150   000207                   46     	rts pc
+001152      001    002    003     47     Matrix: .byte 1, 2, 3 ,4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17
+            004    005    006            
+            007    010    011            
+            012    013    014            
+            015    016    017            
+
+
+	S Y M B O L   T A B L E
+	=======================
+
+SYMBOL    VALUE   TYPE
+------    -----   ----
+main      001000  text     
+Matrix    001152  text     
+isLegal   001016  text     
+isLegalL  001044  text     
+isLegalA  001066  text     
+isIllega  001106  text     
+indeedLe  001130  text     

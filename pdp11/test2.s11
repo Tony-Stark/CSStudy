@@ -1,0 +1,65 @@
+.= torg + 2000
+main: mov #main, sp
+;add #100, (sp)
+	  tst -(sp)
+	  mov #X, -(sp)
+	  mov #3, -(sp)
+	  jsr pc, isWord
+	  mov 2(sp), r0
+	  halt
+	  
+isWord:	;word address  20
+		;word length  16
+		;rts address   14
+		mov r0, -(sp);12
+	    mov r1, -(sp);10
+	    mov r2, -(sp);6
+	    mov r3, -(sp);4
+	    mov r4, -(sp);2
+	    mov r5, -(sp);0
+		mov 20(sp), r0
+		mov 16(sp), r1
+		mov #Dictionary, r2
+		mov #DicLen, r3
+		movb (r3), r3
+		while1iw: tst r3
+				 beq falseiw
+				 inc r4
+				 cmpb (r2), #100
+				 beq checkNikud
+				 cmpb (r0)+, (r2)+
+				 bne skipNWiw
+				 br while1iw
+		skipNWiw: mov 20(sp), r0
+				 mov 16(sp), r1			
+				 clr r4
+				 whileNWiw:
+						   cmpb (r2)+, #100
+						   beq while1iw
+						   br whileNWiw
+		
+		checkNikud:  dec r4
+					cmpb r4, r1
+					beq trueiw
+					dec r3
+					tst r3
+					bne while1iw
+					br falseiw
+		trueiw:	clr 22(sp)
+				inc 22(sp)
+				br return
+		falseiw:	clr 22(sp)
+				br return
+		return: mov (sp)+, r5
+				mov (sp)+, r4
+				mov (sp)+, r3
+				mov (sp)+, r2
+				mov (sp)+, r1
+				mov (sp)+, r0
+				rts pc
+
+X: .ascii<ist>
+.even
+Dictionary: .ascii<Perfect@job@is@Secret@top@> 
+.even
+DicLen: .word 5

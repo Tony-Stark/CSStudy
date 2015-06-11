@@ -1,0 +1,1160 @@
+Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
+
+
+	S O U R C E    F I L E    :    part2.s11
+	========================================
+
+000000   ...... ...... ......      1     .= torg + 1000
+                                   2     
+                                   3     ;Main function manages the program, and sends it to the appropriate
+                                   4     ;functions.
+001000   ...... ......             5     main: mov #main, sp			;set stack pointer
+001004   ...... ......             6     	mov #TextList, r1		;r1 stores the address of the head of the node
+001010   ...... ......             7     	jsr pc, nodeHandle		;start handling nodes will
+001014   ......                    8     	boazMain: clr r0
+001016   ......                    9     		 clr r1
+001020   ......                   10     		 clr r3
+001022   ...... ......            11     initCollSeq: cmpb r1, #16.
+001026   ......                   12     		    beq initHoles
+001030   ...... ......            13     a1729: cmpb r0, #16.
+001034   ......                   14     			  beq initCollSeq
+001036   ...... ......            15     			  mov #ParMat, r5
+001042   ......                   16     			  add r0, r5
+001044   ......                   17     			  cmpb (r5), r1
+001046   ......                   18     			  bne skip1
+001050   ...... ......            19     			  mov #Collection, r5
+001054   ......                   20     		      add r3, r5
+001056   ......                   21     			  movb r0, (r5)
+001060   ...... ......            22     			  mov #Sequence, r5
+001064   ......                   23     		      add r3, r5
+001066   ......                   24     			  movb r0, (r5)
+001070   ......                   25     			  bne skip1
+001072   ......                   26     			  inc r3
+001074   ......                   27     		   	  inc r1
+001076   ......                   28     			  clr r0
+001100   ......                   29     			  br initCollSeq
+001102   ......                   30     skip1: inc r0
+001104   ......                   31     	   br a1729
+001106   ......                   32     initHoles: clr r0
+001110   ......                   33     		  clr r1
+001112   ...... ......            34     while1:  cmpb r0, #16.
+001116   ......                   35     		beq step3
+001120   ...... ......            36     		mov #ParMat, r5
+001124   ......                   37     		add r0, r5
+001126   ...... ......            38     		cmpb (r5),#-1
+001132   ......                   39     		beq AddHole
+001134   ......                   40     		inc r0
+001136   ......                   41     		br while1
+001140   ...... ......            42     AddHole:mov #ParMat, r5
+001144   ......                   43     		add r0, r5 
+001146   ...... ......            44     		mov #HolesArray, r4
+001152   ......                   45     		add r1, r4
+001154   ......                   46     		mov (r5), (r4)
+001156   ......                   47     		inc r1
+001160   ......                   48     		inc r0
+001162   ......                   49     		br while1
+001164   ...... ......            50     step3: mov r3, #Length
+001170   ......                   51     	  clr r0
+001172   ......                   52     	  clr r1
+001174   ......                   53     	  clr r3
+001176   ...... ......            54     AddSequenceToMatrix: cmpb r3, Length
+001202   ......                   55     				    beq step4
+001204   ...... ......            56     					mov #HolesArray, r5
+001210   ......                   57     		            add r1, r5
+001212   ...... ......            58     					mov Sequence(r0),(r5)
+001216   ......                   59     					inc r0
+001220   ......                   60     					inc r1
+001222   ......                   61     					br AddSequenceToMatrix
+001224                            62     step4: ;parmat isLegal?
+001224   ......                   63     	   tst -(sp)
+001226   ...... ......            64     	   mov #ParMat,-(sp) 
+001232   ...... ......            65     	   jsr pc, isLegal
+001236   ......                   66     	   tst (sp)+
+001240   ...... ......            67     	   cmp (sp)+, #1
+001244   ......                   68     	   bne advSeq ;if yes: decodeSentence.
+001246   ...... ......            69     	   mov #ParMat, -(sp)
+001252   ...... ......            70     	   mov #Secret, -(sp)
+001256   ...... ......            71     	   jsr pc, decodeSentence
+001262   ......                   72     	   tst (sp)+
+001264   ......                   73     	   tst (sp)+
+                                  74     	   
+001266   ......                   75     	   tst (sp)+
+001270   ...... ......            76     	   mov #SecretLen,-(sp) 
+001274   ...... ......            77     	   mov #Output,-(sp) 
+001300   ...... ......            78     	   jsr pc, isSentence
+001304   ......                   79     	   tst (sp)+
+001306   ......                   80     	   tst (sp)+
+001310   ...... ......            81     	   cmp (sp)+, #1
+001314   ......                   82     	   beq returnbm
+001316   ...... ......            83     advSeq: mov #Collection, -(sp)
+001322   ...... ......            84            mov #Sequence, -(sp)
+001326   ...... ......            85     	   mov #Length, -(sp)
+001332   ...... ......            86            jsr pc, nextComp
+001336   ......                   87     	   tst (sp)+
+001340   ......                   88     	   tst (sp)+
+001342   ......                   89     	   tst (sp)+
+001344   ......                   90     	   br AddSequenceToMatrix
+                                  91     		     ;if yes mov to output and we're done.
+                                  92     			 ;if not; nextComp and branch AddSequenceToMatrix
+                                  93     		;if not: nextComp and branch AddSequenceToMatrix
+                                  94     ;;;; Alright, now we only have to write the decodeSentenceSentenceand IsSentence
+                                  95     ;;;;;;IsSentence;;;;;
+001346                            96     isSentence: ;output 22
+                                  97     			; secret 20
+                                  98                ;secretlen 16
+001346   ......                   99     		   mov r0, -(sp) ;12
+001350   ......                  100     	       mov r1, -(sp) ;10
+001352   ......                  101     	       mov r2, -(sp) ;6
+001354   ......                  102     	       mov r3, -(sp) ;4
+001356   ......                  103     	       mov r4, -(sp) ;2
+001360   ......                  104     	       mov r5, -(sp) ;0
+001362   ......                  105     		   clr r0
+001364   ......                  106     		   clr r1
+001366   ......                  107     		   clr r2
+001370   ......                  108     		   clr r3
+001372   ......                  109     		   clr r4
+001374   ......                  110     		   clr r5
+001376   ...... ...... ......    111     		   mov #1,22(sp)
+001404   ...... ......           112     while1is: cmpb r0, @16(sp)
+001410   ......                  113     		  beq returnis
+001412   ......                  114     		  tst -(sp)
+001414   ......                  115     		  tst -(sp)
+001416   ...... ......           116     		  mov @20(sp), -(sp)
+001422   ...... ......           117     		  mov @16(sp), -(sp)
+001426   ......                  118     		  mov r4, -(sp)
+001430   ...... ......           119     		  jsr r5, getWord
+001434   ......                  120     		  tst (sp)+
+001436   ......                  121     		  tst (sp)+
+001440   ......                  122     		  mov (sp)+,r1 ;address
+001442   ......                  123     		  mov (sp)+,r2 ;length
+001444   ......                  124     		  mov r2, r3
+001446   ......                  125     		  add r1, r3
+001450   ......                  126     		  dec r3
+001452   ...... ......           127     		  cmpb (r3), #41
+001456   ......                  128     		  beq hasNikud
+001460   ...... ......           129     		  cmpb (r3), #54
+001464   ......                  130     		  beq hasNikud
+001466   ...... ......           131     		  cmpb (r3), #56
+001472   ......                  132     		  beq hasNikud
+001474   ...... ......           133     		  cmpb (r3), #77
+001500   ......                  134     		  beq hasNikud
+001502   ......                  135     toIsWord: tst -(sp)
+001504   ......                  136     		  mov r1, -(sp)
+001506   ......                  137     		  mov r2, -(sp)
+001510   ...... ......           138     		  jsr pc, isWord
+001514   ......                  139     		  tst (sp)+
+001516   ......                  140     		  tst (sp)+
+001520   ...... ......           141     		  cmpb (sp)+, #1
+001524   ......                  142     		  bne falseis
+001526   ......                  143     		  inc r4
+001530   ...... ......           144     		  sub #Secret, r3
+001534   ......                  145     		  add r3, r0
+001536   ...... ......           146     		  jmp while1is
+001542   ......                  147     hasNikud: dec r2
+001544   ......                  148     	     br toIsWord
+001546   ...... ...... ......    149     falseis: mov #0,22(sp)
+001554   ......                  150     		 br returnis
+001556   ......                  151     returnis:        mov (sp)+, r5    ;12
+001560   ......                  152     				 mov (sp)+, r4     ;10
+001562   ......                  153     				 mov (sp)+, r3    ;6
+001564   ......                  154     				 mov (sp)+, r2    ;4
+001566   ......                  155     				 mov (sp)+, r1    ;2
+001570   ......                  156     			   	 mov (sp)+, r0
+001572   ......                  157     rts pc 
+001574   ......                  158     	halt	
+001576   ......                  159     boazMain: clr r0
+		*** error  3 in part2.s11 - doubly defined label.
+001600   ......                  160     		 clr r1
+001602   ......                  161     		 clr r3
+001604   ...... ......           162     initCollSeq: cmpb r1, #16.
+		*** error  3 in part2.s11 - doubly defined label.
+001610   ......                  163     		    beq initHoles
+001612   ...... ......           164     a1729: cmpb r0, #16.
+		*** error  3 in part2.s11 - doubly defined label.
+001616   ......                  165     			  beq initCollSeq
+001620   ...... ......           166     			  mov #ParMat, r5
+001624   ......                  167     			  add r0, r5
+001626   ......                  168     			  cmpb (r5), r1
+001630   ......                  169     			  bne skip1
+001632   ...... ......           170     			  mov #Collection, r5
+001636   ......                  171     		      add r3, r5
+001640   ......                  172     			  movb r0, (r5)
+001642   ...... ......           173     			  mov #Sequence, r5
+001646   ......                  174     		      add r3, r5
+001650   ......                  175     			  movb r0, (r5)
+001652   ......                  176     			  bne skip1
+001654   ......                  177     			  inc r3
+001656   ......                  178     		   	  inc r1
+001660   ......                  179     			  clr r0
+001662   ......                  180     			  br initCollSeq
+001664   ......                  181     skip1: inc r0
+		*** error  3 in part2.s11 - doubly defined label.
+001666   ......                  182     	   br a1729
+001670   ......                  183     initHoles: clr r0
+		*** error  3 in part2.s11 - doubly defined label.
+001672   ......                  184     		  clr r1
+001674   ...... ......           185     while1:  cmpb r0, #16.
+		*** error  3 in part2.s11 - doubly defined label.
+001700   ......                  186     		beq step3
+001702   ...... ......           187     		mov #ParMat, r5
+001706   ......                  188     		add r0, r5
+001710   ...... ......           189     		cmpb (r5),#-1
+001714   ......                  190     		beq AddHole
+001716   ......                  191     		inc r0
+001720   ......                  192     		br while1
+001722   ...... ......           193     AddHole:mov #ParMat, r5
+		*** error  3 in part2.s11 - doubly defined label.
+001726   ......                  194     		add r0, r5 
+001730   ...... ......           195     		mov #HolesArray, r4
+001734   ......                  196     		add r1, r4
+001736   ......                  197     		mov (r5), (r4)
+001740   ......                  198     		inc r1
+001742   ......                  199     		inc r0
+001744   ......                  200     		br while1
+001746   ...... ......           201     step3: mov r3, #Length
+		*** error  3 in part2.s11 - doubly defined label.
+001752   ......                  202     	  clr r0
+001754   ......                  203     	  clr r1
+001756   ......                  204     	  clr r3
+001760   ...... ......           205     AddSequenceToMatrix: cmpb r3, Length
+		*** error  3 in part2.s11 - doubly defined label.
+001764   ......                  206     				    beq step4
+001766   ...... ......           207     					mov #HolesArray, r5
+001772   ......                  208     		            add r1, r5
+001774   ...... ......           209     					mov Sequence(r0),(r5)
+002000   ......                  210     					inc r0
+002002   ......                  211     					inc r1
+002004   ......                  212     					br AddSequenceToMatrix
+002006                           213     step4: ;parmat isLegal?
+		*** error  3 in part2.s11 - doubly defined label.
+002006   ......                  214     	   tst -(sp)
+002010   ...... ......           215     	   mov #ParMat,-(sp) 
+002014   ...... ......           216     	   jsr pc, isLegal
+002020   ......                  217     	   tst (sp)+
+002022   ...... ......           218     	   cmp (sp)+, #1
+002026   ......                  219     	   bne advSeq ;if yes: decodeSentence.
+002030   ...... ......           220     	   mov #ParMat, -(sp)
+002034   ...... ......           221     	   mov #Secret, -(sp)
+002040   ...... ......           222     	   jsr pc, decodeSentence
+002044   ......                  223     	   tst (sp)+
+002046   ......                  224     	   tst (sp)+
+                                 225     	   
+002050   ......                  226     	   tst (sp)+
+002052   ...... ......           227     	   mov #SecretLen,-(sp) 
+002056   ...... ......           228     	   mov #Output,-(sp) 
+002062   ...... ......           229     	   jsr pc, isSentence
+002066   ......                  230     	   tst (sp)+
+002070   ......                  231     	   tst (sp)+
+002072   ...... ......           232     	   cmp (sp)+, #1
+002076   ......                  233     	   beq returnbm
+002100   ...... ......           234     advSeq: mov #Collection, -(sp)
+		*** error  3 in part2.s11 - doubly defined label.
+002104   ...... ......           235            mov #Sequence, -(sp)
+002110   ...... ......           236     	   mov #Length, -(sp)
+002114   ...... ......           237            jsr pc, nextComp
+002120   ......                  238     	   tst (sp)+
+002122   ......                  239     	   tst (sp)+
+002124   ......                  240     	   tst (sp)+
+002126   ......                  241     	   br AddSequenceToMatrix
+                                 242     		     ;if yes mov to output and we're done.
+                                 243     			 ;if not; nextComp and branch AddSequenceToMatrix
+                                 244     		;if not: nextComp and branch AddSequenceToMatrix
+                                 245     ;;;; Alright, now we only have to write the decodeSentenceSentenceand IsSentence
+                                 246     ;;;;;;IsSentence;;;;;
+002130                           247     isSentence: ;output 22
+		*** error  3 in part2.s11 - doubly defined label.
+                                 248     			; secret 20
+                                 249                ;secretlen 16
+002130   ......                  250     		   mov r0, -(sp) ;12
+002132   ......                  251     	       mov r1, -(sp) ;10
+002134   ......                  252     	       mov r2, -(sp) ;6
+002136   ......                  253     	       mov r3, -(sp) ;4
+002140   ......                  254     	       mov r4, -(sp) ;2
+002142   ......                  255     	       mov r5, -(sp) ;0
+002144   ......                  256     		   clr r0
+002146   ......                  257     		   clr r1
+002150   ......                  258     		   clr r2
+002152   ......                  259     		   clr r3
+002154   ......                  260     		   clr r4
+002156   ......                  261     		   clr r5
+002160   ...... ...... ......    262     		   mov #1,22(sp)
+002166   ...... ......           263     while1is: cmpb r0, @16(sp)
+		*** error  3 in part2.s11 - doubly defined label.
+002172   ......                  264     		  beq returnis
+002174   ......                  265     		  tst -(sp)
+002176   ......                  266     		  tst -(sp)
+002200   ...... ......           267     		  mov @20(sp), -(sp)
+002204   ...... ......           268     		  mov @16(sp), -(sp)
+002210   ......                  269     		  mov r4, -(sp)
+002212   ...... ......           270     		  jsr r5, getWord
+002216   ......                  271     		  tst (sp)+
+002220   ......                  272     		  tst (sp)+
+002222   ......                  273     		  mov (sp)+,r1 ;address
+002224   ......                  274     		  mov (sp)+,r2 ;length
+002226   ......                  275     		  mov r2, r3
+002230   ......                  276     		  add r1, r3
+002232   ......                  277     		  dec r3
+002234   ...... ......           278     		  cmpb (r3), #41
+002240   ......                  279     		  beq hasNikud
+002242   ...... ......           280     		  cmpb (r3), #54
+002246   ......                  281     		  beq hasNikud
+002250   ...... ......           282     		  cmpb (r3), #56
+002254   ......                  283     		  beq hasNikud
+002256   ...... ......           284     		  cmpb (r3), #77
+002262   ......                  285     		  beq hasNikud
+002264   ......                  286     toIsWord: tst -(sp)
+		*** error  3 in part2.s11 - doubly defined label.
+002266   ......                  287     		  mov r1, -(sp)
+002270   ......                  288     		  mov r2, -(sp)
+002272   ...... ......           289     		  jsr pc, isWord
+002276   ......                  290     		  tst (sp)+
+002300   ......                  291     		  tst (sp)+
+002302   ...... ......           292     		  cmpb (sp)+, #1
+002306   ......                  293     		  bne falseis
+002310   ......                  294     		  inc r4
+002312   ...... ......           295     		  sub #Secret, r3
+002316   ......                  296     		  add r3, r0
+002320   ...... ......           297     		  jmp while1is
+002324   ......                  298     hasNikud: dec r2
+		*** error  3 in part2.s11 - doubly defined label.
+002326   ......                  299     	     br toIsWord
+002330   ...... ...... ......    300     falseis: mov #0,22(sp)
+		*** error  3 in part2.s11 - doubly defined label.
+002336   ......                  301     		 br returnis
+002340   ......                  302     returnis:        mov (sp)+, r5    ;12
+		*** error  3 in part2.s11 - doubly defined label.
+002342   ......                  303     				 mov (sp)+, r4     ;10
+002344   ......                  304     				 mov (sp)+, r3    ;6
+002346   ......                  305     				 mov (sp)+, r2    ;4
+002350   ......                  306     				 mov (sp)+, r1    ;2
+002352   ......                  307     			   	 mov (sp)+, r0
+002354   ......                  308     rts pc 
+002356   ......                  309     getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
+002360   ......                  310     	  	mov r1, -(sp) ;;
+002362   ......                  311     		mov r2, -(sp) ;;
+002364   ......                  312     		mov (r5)+, r0 ;sentence address
+002366   ......                  313     		mov (r5)+, r1 ;sentence length
+002370   ......                  314     		mov (r5)+, r2 ;i
+002372   ......                  315     		while1gw: tst r2
+002374   ......                  316     		beq findLengthgw
+002376   ...... ......           317     		cmpb (r0), #40
+002402   ......                  318     		beq while1p1gw
+002404   ......                  319     		dec r2
+002406   ......                  320     		br while1p2gw
+002410   ......                  321     		while1p1gw: dec r1
+002412   ...... ......           322     		cmpb(r0)+, #40
+002416   ......                  323     		beq while1p1gw
+002420   ......                  324     		dec r0
+002422   ......                  325     		br while1gw
+002424   ......                  326     		while1p2gw: tst r2
+002426   ......                  327     		beq findLengthgw
+002430   ......                  328     		tst r1
+002432   ......                  329     		beq findLengthgw
+002434   ......                  330     		dec r1
+002436   ...... ......           331     		cmpb (r0)+, #40
+002442   ......                  332     		bne while1p2gw
+002444   ......                  333     		dec r0
+002446   ......                  334     		inc r1
+002450   ......                  335     		br while1gw
+002452   ...... ......           336     		findLengthgw:  mov r0, 10(sp)
+002456   ...... ......           337     		clr 12(sp)
+002462   ...... ......           338     		while2gw: cmpb (r0)+, #40
+002466   ......                  339     		beq returngw
+002470   ......                  340     		tst r1
+002472   ......                  341     		beq returngw
+002474   ...... ......           342     		inc 10(sp)
+002500   ......                  343     		dec r1
+002502   ......                  344     		br while2gw
+002504   ......                  345     		returngw: mov (sp)+, r2
+002506   ......                  346     		mov (sp)+, r1
+002510   ......                  347     		mov (sp)+, r0
+002512   ......                  348     		rts r5
+                                 349     
+                                 350     
+002514   ......                  351     isWord: mov r0, -(sp) ;12
+002516   ......                  352     	   mov r1, -(sp) ;10
+002520   ......                  353     	   mov r2, -(sp) ;6
+002522   ......                  354     	   mov r3, -(sp) ;4
+002524   ......                  355     	   mov r4, -(sp) ;2
+002526   ......                  356     	   mov r5, -(sp) ;0
+002530   ...... ......           357     	   add #16, sp
+002534   ......                  358     	   mov (sp)+, r0       ;r0 now holds the length of the word
+002536   ......                  359     	   mov (sp), r1        ;r1 now holds the address of the word
+002540   ...... ......           360     	   mov #Dictionary, r2 ;r2 will hold the dictionary address
+002544   ...... ......           361     	   mov #DicLen, r3     ;r3 holds the DicLen address
+002550   ......                  362     	   movb (r3), r3       ;r3 holds the dictionary length
+002552   ......                  363     	   clr r4              ;r4 will hold the current word char iterator
+002554   ......                  364     	   mov r1, r5
+002556   ......                  365     	   cmpWord: cmpb (r2)+, (r5)+
+002560   ......                  366     	   bne getNextWord
+002562   ......                  367     	   inc r4
+002564   ......                  368     	   cmp r4, r0
+002566   ......                  369     	   beq wordFoundiw
+002570   ...... ......           370     	   cmpb (r2), #100
+002574   ......                  371     	   beq getNextWord
+002576   ......                  372     	   br cmpWord
+002600   ......                  373     	   getNextWord: dec r3
+002602   ......                  374     	   tst r3
+002604   ......                  375     	   beq notFound
+002606   ......                  376     	   mov r1, r5
+002610   ...... ......           377     	   cmpb (r2)+, #100
+002614   ......                  378     	   beq cmpWord
+002616   ......                  379     	   br getNextAux
+002620   ...... ......           380     	   getNextAux: cmpb (r2)+, #100
+002624   ......                  381     	   bne getNextAux
+002626   ......                  382     	   br cmpWord
+002630   ...... ......           383     	   notFound: add #-18, sp
+002634   ......                  384     	   mov (sp)+, r5
+002636   ......                  385     	   mov (sp)+, r4
+002640   ......                  386     	   mov (sp)+, r3
+002642   ......                  387     	   mov (sp)+, r2
+002644   ......                  388     	   mov (sp)+, r1
+002646   ......                  389     	   mov (sp)+, r0
+002650   ...... ......           390     	   mov (sp), 4(sp)
+002654   ...... ...... ......    391     	   mov #0, 6(sp)
+002662   ......                  392     	   cmp (sp)+, (sp)+
+002664   ......                  393     	   rts pc
+002666   ...... ......           394     	   wordFoundiw: add #-18, sp
+002672   ......                  395     	   mov (sp)+, r5
+002674   ......                  396     	   mov (sp)+, r4
+002676   ......                  397     	   mov (sp)+, r3
+002700   ......                  398     	   mov (sp)+, r2
+002702   ......                  399     	   mov (sp)+, r1
+002704   ......                  400     	   mov (sp)+, r0
+002706   ...... ......           401     	   mov (sp), 4(sp)
+002712   ...... ...... ......    402     	   mov #1, 6(sp)
+002720   ......                  403     	   cmp (sp)+, (sp)+
+002722   ......                  404     	   rts pc
+                                 405     
+002724                           406     nextComp: ;collection           22
+                                 407              ;sequence         20
+                                 408              ;length       16
+                                 409     		 ;rts address      14
+002724   ......                  410              mov r0, -(sp)    ;12
+002726   ......                  411              mov r1, -(sp)    ;10
+002730   ......                  412              mov r2, -(sp)    ;6
+002732   ......                  413              mov r3, -(sp)    ;4
+002734   ......                  414              mov r4, -(sp)    ;2
+002736   ......                  415              mov r5, -(sp)   ;0
+                                 416     		 ;add #14,sp
+002740   ...... ......           417              mov 22(sp), r1 ;col addr    
+002744   ...... ......           418              mov 20(sp), r2 ;seq addr
+002750   ...... ......           419              mov 16(sp), r0  ;length   
+002754   ......                  420              clr r3 ;seq iterator
+002756   ......                  421              clr r4 ; col index
+002760   ......                  422              dec r0 ;length - 1;
+002762   ......                  423     		 mov r0, r5
+                                 424              ;mov r0, r2
+002764   ......                  425              add r0, r2
+002766   ...... ......           426     		 mov 16(sp), r3
+002772   ......                  427     		 inc r3
+                                 428     		 
+002774   ......                  429              findnc: tst r3
+002776   ......                  430     				beq return
+003000   ......                  431     				cmpb (r1)+,(r2)
+003002   ......                  432                     beq easync
+003004   ......                  433                     sob r0, findnc
+003006   ...... ......           434     		 cyclicnc: mov 22(sp), r1
+003012   ......                  435     				  movb (r1), (r2)
+003014   ......                  436     				  dec r2
+003016   ......                  437     				  dec r3
+003020   ......                  438     				  mov r5, r0
+003022   ......                  439                       br findnc
+003024   ......                  440              easync:  movb (r1), (r2)
+003026   ......                  441     				 dec r3
+003030   ......                  442     				 br return
+003032   ......                  443     		 return: mov (sp)+, r5    ;12
+003034   ......                  444     				 mov (sp)+, r4     ;10
+003036   ......                  445     				 mov (sp)+, r3    ;6
+003040   ......                  446     				 mov (sp)+, r2    ;4
+003042   ......                  447     				 mov (sp)+, r1    ;2
+003044   ......                  448     			   	 mov (sp)+, r0
+003046   ......                  449              rts pc
+                                 450     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                 451     ;for boazMain:
+003050   ...... ...... ......    452     HolesArray: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+003070   ...... ...... ......    453     Sequence: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+003110   ...... ...... ......    454     Collection: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+003130      ...                  455     Length: .byte 0		 
+                                 456     
+                                 457     ;----------test for part A---------- 
+003131   ...... ...... ......    458     Keys:  .byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17 ;M1
+003151   ...... ...... ......    459            .byte 17, 2, 15, 11, 3, 10, 5, 13, 1, 4, 14, 12, 0, 6, 7, 16 ;M2
+003171   ...... ...... ......    460            .byte 17, 2, 15, 11, 3, 10, 5, 13, 1, 4, 14, 2, 0, 6, 7, 16 ;M3 - illegal
+003211   ...... ...... ......    461     	   .byte 13, 0, 3, 2, 16, 14, 6, 11, 1, 7, 5, 15, 12, 10, 17, 4 ;M4
+003231      ...                  462     .even
+003232   ...... ......           463     Txt2: .ascii <Atam>
+003236                           464     .even
+003236   ...... ...... ......    465     Out5: .blkw 9.
+003260   ......                  466     KeysLen: .word 4
+003262   ...... ...... ......    467     Out8: .blkw 37.
+003374   ...... ...... ......    468     TextList: .word Txt1, 11., 0, Out1, Node1
+003406   ...... ...... ......    469     Txt4: .ascii <today is thursday>
+003427      ...                  470     .even
+003430   ...... ...... ......    471     Node2: .word Txt3, 4, 1, Out3, Node3
+003442   ...... ...... ......    472     Txt7: .ascii <AD MATAI!@#@!n@TvkJ-E}u^X8-rf~!eU58Wxs*k_GaH*G4F@!4@#!@#SEDRERT$4 rrteert>
+003553      ...                  473     .even
+003554   ...... ...... ......    474     Node3: .word Txt4, 17., 0, Out4, Node4
+003566   ...... ...... ......    475     Txt6: .ascii <ATAM, MATAM AND ROCKNROLL>
+003617      ...                  476     .even
+003620   ...... ...... ......    477     Node4: .word Txt5, 18., 0, Out5, Node5
+003632   ...... ...... ......    478     Out1: .blkw 6.
+003646   ...... ...... ......    479     Node5: .word Txt6, 25., 1, Out6, Node6
+003660   ...... ...... ......    480     Out6: .blkw 13.
+003712   ...... ...... ......    481     Node6: .word Txt7, 73., 1, Out7, Node7
+003724   ...... ...... ......    482     Txt1: .ascii<I love atam>
+003737      ...                  483     .even
+003740   ...... ...... ......    484     Out7: .blkw 37.
+004052   ...... ...... ......    485     Node7: .word Txt7, 73., 0, Out8, 0
+004064   ...... ......           486     Txt3: .byte 044, 214, 044, 302
+004070   ...... ...... ......    487     Out4: .blkw 9.
+004112   ...... ...... ......    488     Txt5: .ascii <tommorow is FrIdAy>
+004134                           489     .even
+004134   ...... ...... ......    490     Node1: .word Txt2, 4, 0, Out2, Node2
+004146   ...... ......           491     Out2: .blkw 2.
+004152   ...... ......           492     Out3: .blkw 2.
+                                 493     
+                                 494     
+                                 495     ;This branch cleared the 40 register and sends the program back to main,
+                                 496     ;to complete the execution of the second part.
+004156   ......                  497     noNewNode: clr r0 			;clear register		
+004160   ......                  498     	rts pc					;return to main
+                                 499     
+                                 500     ;This branch sends mode, matrix, output label and text label information to
+                                 501     ;the system function using the stack, and text length using r0.
+004162   ......                  502     nodeHandle: mov (r1), -(sp)	;push address of first node on stack
+004164   ...... ......           503     	mov 6(r1), -(sp)		;push address of output label on stack
+004170   ...... ......           504     	mov #Keys, -(sp)		;push address of first matrix on stack
+004174   ...... ......           505     	mov 4(r1), -(sp)		;push address of mode on stack
+004200   ...... ......           506     	mov 2(r1), r0			;r0 will hold the test length
+004204   ......                  507     	br systemAux			;systemAux manages the system function
+                                 508     
+                                 509     ;This branch is an auxiliary for system, used to check if the node is legal,
+                                 510     ;and if so, send the program to fetch the relevant information.
+004206   ......                  511     systemAux: mov r1, -(sp)	;push r1 on stack
+004210   ......                  512     	mov r2, -(sp)			;push r2 on stack
+004212   ......                  513     	mov r3, -(sp)			;push r3 on stack
+004214   ......                  514     	clr r1					;r1 is the byte iterator
+004216   ......                  515     	clr r2					;r2 is the matrix iterator
+004220   ......                  516     	clr r3					;r3 is a temporary register
+004222   ...... ......           517     	jsr pc, system			;send program to the system function
+004226   ......                  518     	mov (sp)+, r3			;after completion of system, pop registers
+004230   ......                  519     	mov (sp)+, r2			;pop r2 from register
+004232   ......                  520     	mov (sp)+, r1			;pop r1 from register
+004234   ...... ......           521     	add #8., sp				;clear trash on stack
+004240   ...... ......           522     	mov 10(r1), r1			;check if there's another node to work on
+004244   ......                  523     	tst r1					;r1 holds the address of next node
+004246   ......                  524     	beq noNewNode			;if null, go to noNewNode branch
+004250   ......                  525     	br nodeHandle			;else, start handling of new node
+                                 526     	
+                                 527     ;System function, as described in the PDF. Receives addresses of the text,
+                                 528     ;output label, matrix, and a mode using the stack. In addition, KeysLen and
+                                 529     ;r0 contain the number of matrices and text length respectively. 
+004252   ...... ......           530     system: jsr pc, matrixCycle	;check for matrix cyclic movement
+004256   ......                  531     	mov r0, -(sp)			;push text length on stack
+004260   ......                  532     	mov r1,	-(sp)			;push byte index on stack
+004262   ...... ......           533     	jsr pc, systemEnd		;check if all bytes have been dealt with
+004266   ......                  534     	tst (sp)+				;allocate memory for address of next legal matrix
+004270   ...... ......           535     	jsr pc, getMatrix		;get address of next legal matrix
+004274   ......                  536     	inc r2					;matrix index is incremented
+004276   ......                  537     	tst -(sp)				;allocate memory for isLegal result
+004300   ...... ......           538     	jsr pc, isLegal			;check if current matrix is legal
+004304   ......                  539     	tst (sp)+				
+004306   ......                  540     	beq illegalMatrix		;if illegal, proceed to next byte
+004310   ...... ......           541     	mov 20(sp), -(sp)		;push text address on stack			
+004314   ......                  542     	add r1, (sp)			;add byte index
+004316   ......                  543     	inc r1					;increment byte index
+004320   ...... ......           544     	mov 20(sp), -(sp)		;push output label on stack
+004324   ...... ......           545     	mov 4(sp), -(sp)		;push matrix address on stack
+004330   ...... ......           546     	mov 20(sp), -(sp)		;push mode on stack
+004334   ...... ......           547     	jsr pc, check			;start encoding/decoding
+004340   ...... ......           548     	add #10., sp
+004344   ...... ...... ......    549     	add #1, 14(sp)
+004352   ......                  550     	br system
+                                 551     
+                                 552     ;Function used to enable cyclic movement of matrices. If matrix 
+                                 553     ;index (r2) is the same as KeysLen, then clear r2.
+004354   ...... ......           554     matrixCycle: mov #KeysLen, r5
+004360   ......                  555     	cmp (r5), r2
+004362   ......                  556     	beq newMatCycle
+004364   ......                  557     	rts pc
+004366   ......                  558     newMatCycle: clr r2
+004370   ......                  559     	clr r5
+004372   ......                  560     	rts pc 
+                                 561     
+                                 562     ;Function checks if all bytes have been dealt with, and if so 
+                                 563     ;sends the program to continue to the next node.
+004374   ...... ...... ......    564     systemEnd: cmp 2(sp), 4(sp)	;compare text length and byte index
+004402   ......                  565     	beq endLength			;if equal, continue to next node
+004404   ......                  566     	rts pc					;return to system
+004406   ......                  567     endLength: cmp (sp)+, (sp)+
+004410   ......                  568     	tst (sp)+
+004412   ......                  569     	rts pc
+                                 570     
+                                 571     ;Function used to get the next matrix in a cyclic manner. Note that the
+                                 572     ;function doesn't have to be legal.
+004414   ......                  573     getMatrix: mov r2, -(sp)	;push matrix index on stack
+004416   ...... ......           574     	clr 4(sp)				;clear output stack memory
+004422   ......                  575     	inc r2					;increment r2 for loop
+004424   ...... ......           576     	jsr pc, getNextMatrix	;gets address of next matrix
+004430   ...... ...... ......    577     	add 20(sp), 4(sp)		;2(sp) now holds the address of the next matrix
+004436   ......                  578     	mov (sp)+, r2			;pop value of r2 from stack
+004440   ......                  579     	rts pc					;address of next matrix is now on stack
+004442   ...... ...... ......    580     getNextMatrix: add #16., 6(sp)	
+004450   ......                  581     	dec r2
+004452   ......                  582     	tst r2
+004454   ......                  583     	bne getNextMatrix
+004456   ...... ...... ......    584     	sub #16., 6(sp)
+004464   ......                  585     	rts pc
+                                 586     
+                                 587     ;Branch used to send the current byte unchanged to the output label,
+                                 588     ;in case the matrix is illegal. 
+004466   ......                  589     illegalMatrix: mov r4, -(sp)
+004470   ......                  590     	mov r5, -(sp)
+004472   ...... ......           591     	mov 22(sp), r4	;push output label address
+004476   ...... ......           592     	mov 24(sp), r5	;r5 now holds the address of the input text
+004502   ......                  593     	add r1, r5		;add byte index to r5
+004504   ......                  594     	movb (r5), (r4)	;move unchanged byte to output
+004506   ......                  595     	inc r1			;increment byte index
+004510   ......                  596     	mov (sp)+, r5
+004512   ......                  597     	mov (sp)+, r4
+004514   ......                  598     	tst (sp)+
+004516   ...... ......           599     	inc 14(sp)
+004522   ......                  600     	br system		;continue to next byte
+                                 601     
+                                 602     ;Function which begins the encryption/decryption process. Just like the
+                                 603     ;branch from the last assignment, with few adjustments.
+004524   ......                  604     check:  mov r1, -(sp)
+004526   ......                  605     	mov r2, -(sp)
+004530   ......                  606     	mov r3, -(sp)
+004532   ......                  607     	mov r4, -(sp)
+004534   ...... ......           608     	mov 14(sp), r1     	    ;r1 now has the address of the first key
+004540   ...... ......           609     	mov 20(sp), r4			;the address of the first Text byte is stored in r4
+004544   ......                  610     	movb (r4), r4			;current char is stored in r4
+004546   ...... ......           611     	bic #177400, r4			;bit clear used to get specific char 
+004552   ......                  612     	mov r4, r2			    ;move value of current Text byte to r2
+004554   ...... ......           613     	bic #360, r2			;store y value in r2
+004560   ......                  614     	mov r4, r3 		     	;move value of current Text byte to r3
+004562   ...... ......           615     	bic #3, r3				;clear first 4 bits
+004566   ...... ......           616     	ash #-4, r3				;store x value in r3
+                                 617     	
+                                 618     ;yfind finds the address of the key which equals to y
+004572   ......                  619     yfind:  movb (r1)+, r4		;first map key is stored in r4, and r1 is advanced by 1
+004574   ......                  620     	cmp r4, r2				;if y part is equal to the value of the key, continue
+004576   ......                  621     	bne yfind
+004600   ...... ......           622     	add #-1, r1				;r1 is decremented to account for the previous incrementation 
+004604   ......                  623     	mov r1, r4				;r4 stores the address of the y key
+004606   ...... ......           624     	mov 14(sp), r1		;reset key pointer
+                                 625     	
+                                 626     ;xfind finds the address of the key which equals to x
+004612   ......                  627     xfind:  movb (r1)+, r5		;first map key is stored in r5, and r1 is advanced by 1
+004614   ......                  628     	cmp r5, r3				;if x part is equal to the value of the key, continue
+004616   ......                  629     	bne xfind
+004620   ...... ......           630     	add #-1, r1				;r1 is decremented to account for the previous incrementation
+004624   ......                  631     	mov r1, r5 				;r5 stores address of x key
+004626   ...... ......           632     	mov 14(sp), r1		;reset key pointer
+                                 633     
+                                 634     ;diff calculates the location of x, y and decides whether to encrypt
+                                 635     ;or decrypt
+004632   ...... ......           636     diff:   sub 14(sp), r4	;r4 now has the serial place of y in the key map
+004636   ...... ......           637     	sub 14(sp), r5		;r5 now has the serial place of x in the key map
+004642   ......                  638     	mov r4, r3				;r3 now has the serial place of y in the key map
+004644   ......                  639     	clr r2					;r2 is cleared to enable division of r2, r3
+004646   ......                  640     	clr r4					;r4 is cleared to enable division of r4, r5
+004650   ...... ......           641     	div #4, r2				;r2 stores the row of y, r3 stores the column of y
+004654   ...... ......           642     	div #4, r4				;r4 stores the row of x, r5 stores the column of x
+004660   ...... ......           643     	mov 12(sp), r1			;r1 stores address of Mode
+004664   ...... ......           644     	cmp r1, #0         	    ;check mode number
+004670   ......                  645     	beq encrypt				;if mode number is 0, proceed to encryption
+004672   ......                  646     	br decrypt				;else, proceed to decryption
+                                 647     
+                                 648     ;checks for cases
+004674   ......                  649     encrypt: cmp r2, r4			;if rows are equal, proceed to case A
+004676   ......                  650     	beq eCaseA			
+004700   ......                  651     	cmp r3, r5				;if columns are equal, proceed to case B
+004702   ......                  652     	beq eCaseB
+004704   ......                  653     	br CaseC				;else, proceed to case C
+                                 654     
+004706   ...... ......           655     eCaseA:  cmp r3, #3			;if column of y is 3, it will be cleared in order to enable cyclic movement
+004712   ......                  656     	beq eSubr3A
+004714   ...... ......           657     	cmp r5, #3				;if column of x is 3, it will be cleared in order to enable cyclic movement
+004720   ......                  658     	beq eSubr5A
+004722   ...... ......           659     	add #1, r3				;y is moved right in a cyclic order
+004726   ...... ......           660     	add #1, r5				;x is moved right in a cyclic order
+004732   ......                  661     	br getLower				;proceed to calculate value of W
+004734   ...... ......           662     eSubr3A: mov #-1, r3				;column of y is cleared to enable cyclic movement
+004740   ......                  663     		br eCaseA
+004742   ...... ......           664     eSubr5A: mov #-1, r5				;column of x is cleared to enable cyclic movement
+004746   ......                  665     		br eCaseA
+                                 666     		
+004750   ...... ......           667     eCaseB:  cmp r2, #3			;if row of y is 3, it will be cleared in order to enable cyclic movement
+004754   ......                  668     	beq eSubr2B
+004756   ...... ......           669     	cmp r4, #3				;if row of x is 3, it will be cleared in order to enable cyclic movement
+004762   ......                  670     	beq eSubr4B
+004764   ...... ......           671     	add #1, r2				;y is moved down in a cyclic order
+004770   ...... ......           672     	add #1, r4				;x is moved down in a cyclic order
+004774   ......                  673     	br getLower				;proceed to calculate value of W
+004776   ...... ......           674     eSubr2B: mov #-1, r2				;row of y is cleared to enable cyclic movement
+005002   ......                  675     		br eCaseB
+005004   ...... ......           676     eSubr4B: mov #-1, r4				;row of x is cleared to enable cyclic movement
+005010   ......                  677     		br eCaseB
+                                 678     		
+005012   ......                  679     CaseC: movb r3, r1			;column of y is stored in a temp register
+005014   ......                  680     	movb r5, r3				;column of y is changed to the column of x
+005016   ......                  681     	movb r1, r5				;column of x is changed to the column of y
+005020   ......                  682     	br getLower				;proceed to calculate value of W
+                                 683     
+                                 684     ;checks for cases
+005022   ......                  685     decrypt:cmp r2, r4			;if rows are equal, proceed to case A
+005024   ......                  686     	beq dCaseA
+005026   ......                  687     	cmp r3, r5				;if columns are equal, proceed to case b
+005030   ......                  688     	beq dCaseB
+005032   ......                  689     	br CaseC				;else, proceed to case C
+                                 690     	
+005034                           691     dCaseA:
+005034   ...... ......           692     	cmp r3, #0				;if column of w is 0, it will be added 4 in order to enable cyclic movement
+005040   ......                  693     	beq dSubr3A
+005042   ...... ......           694     	cmp r5, #0				;if column of z is 0, it will be added 4 in order to enable cyclic movement
+005046   ......                  695     	beq dSubr5A
+005050   ...... ......           696     	add #-1, r3				;w is moved left in a cyclic movement
+005054   ...... ......           697     	add #-1, r5				;z is moved left in a cyclic movement
+005060   ......                  698     	br getLower				;proceed to calculate value of y
+005062   ...... ......           699     dSubr3A: mov #4, r3			;column of w is set to 4 to enable cyclic left movement
+005066   ......                  700     		br dCaseA
+005070   ...... ......           701     dSubr5A: mov #4, r5			;column of z is set to 4 to enable cyclic left movement
+005074   ......                  702     		br dCaseA	
+                                 703     		
+005076                           704     dCaseB:						;if row of w is 0, it will be added 4 in order to enable cyclic movement
+005076   ...... ......           705     	cmp r2, #0
+005102   ......                  706     	beq dSubr2B
+005104   ...... ......           707     	cmp r4, #0				;if row of z is 0, it will be added 4 in order to enable cyclic movement
+005110   ......                  708     	beq dSubr4B
+005112   ...... ......           709     	add #-1, r2				;w is moved up in a cyclic movement
+005116   ...... ......           710     	add #-1, r4				;z is moved up in a cyclic movement
+005122   ......                  711     	br getLower				;proceed to calculate value of y
+005124   ...... ......           712     dSubr2B: mov #4, r2			;row of w is set to 4 to enable cyclic left movement
+005130   ......                  713     		br dCaseB
+005132   ...... ......           714     dSubr4B: mov #4, r4			;row of z is set to 4 to enable cyclic left movement
+005136   ......                  715     		br dCaseB
+                                 716     
+                                 717     ;gets lower 4 bits of output
+005140   ...... ......           718     getLower: cmp r2, #0		;if row of lower 4 bits is zero, the loop is finished
+005144   ......                  719     	beq getUpper
+005146   ...... ......           720     	add #4, r3				;4 is added to the r3 register to get the place of the lower bits in the map
+005152   ......                  721     	sob r2, getLower
+005154   ......                  722     	br getUpper				;proceed to calculate upper 4 bits
+                                 723     
+                                 724     ;gets higher 4 bits of output
+005156   ...... ......           725     getUpper: cmp r4, #0		;if row of higher 4 bits is zero, the loop is finished
+005162   ......                  726     	beq Final
+005164   ...... ......           727     	add #4, r5				;4 is added to the r5 register to get the place of the higher bits in the map
+005170   ......                  728     	sob r4, getUpper
+005172   ......                  729     	br Final				;the serial place of the lower 4 bits in the map is stored in r3, and that of the higher - in r5
+                                 730     	
+                                 731     ;calculates output byte and stores it in the output label
+                                 732     ;checks if program has completed its operation
+005174                           733     Final:
+005174   ...... ......           734     	add 14(sp), r3		;the address of the first key is added to r3 to get the address of the value of lower 4 bits
+005200   ...... ......           735     	add 14(sp), r5		;the address of the first key is added to r5 to get the address of the value of upper 4 bits
+005204   ......                  736     	movb (r3), r2			;r2 now stores value of lower 4 bits
+005206   ......                  737     	movb (r5), r4			;r4 now stores value of higher 4 bits
+005210   ...... ......           738     	ash #4, r4				;r4 is shifted 4 times to the left to enable addition of lower 4 bits
+005214   ......                  739     	add r2, r4				;r4 now stores 8 bits: first the lower 4, and then the upper 4. This is the needed result.
+005216   ...... ......           740     	mov 16(sp), r1			;address of first Output byte is added to r1
+005222   ......                  741     	movb r4, (r1)			;the encryption/decryption result is saved in the Output label 
+005224   ......                  742     	mov (sp)+, r4
+005226   ......                  743     	mov (sp)+, r3
+005230   ......                  744     	mov (sp)+, r2
+005232   ......                  745     	mov (sp)+, r1
+005234   ......                  746     	rts pc
+                                 747     
+                                 748     ;Function used to decide if a matrix is legal, that is - has all the numbers
+                                 749     ;necessary for it to be legal. Receives address of matrix on stack, and sends
+                                 750     ;the result on stack. 
+005236   ......                  751     isLegal: 	mov r0, -(sp)
+005240   ......                  752     	mov r1, -(sp)
+005242   ......                  753     	mov r2, -(sp)
+005244   ......                  754     	mov r3, -(sp)
+005246   ......                  755     	mov r4, -(sp)
+005250   ...... ......           756     	mov 16(sp), r0			;address of first matrix is stored in r0
+005254   ......                  757     	mov r0, r4				;r4 won't be changed
+005256   ......                  758     	clr r1					;r1 cleared and prepared for storing the current element
+005260   ......                  759     	clr r2					;r2 holds the matrix index
+005262   ......                  760     	br isLegalLoop
+005264   ......                  761     isLegalLoop: movb (r0)+, r3 ;r3 stores the matrix element value
+005266   ......                  762     	cmp r3, r1				;check if matrix element holds the checked key
+005270   ......                  763     	beq isLegalAux			;if index element equals key, continue
+005272   ...... ......           764     	cmp r2, #17
+005276   ......                  765     	beq isIllegal
+005300   ...... ......           766     	add #1, r2				;matrix index is 
+005304   ......                  767     	br isLegalLoop
+005306   ...... ......           768     isLegalAux: cmp r1, #17
+005312   ......                  769     	beq indeedLegal
+005314   ...... ......           770     	add #1, r1 				;increment index
+005320   ......                  771     	clr r2					;matrix index is cleared
+005322   ......                  772     	mov r4, r0
+005324   ......                  773     	br isLegalLoop
+005326                           774     isIllegal:
+005326   ......                  775     	mov (sp)+, r4
+005330   ......                  776     	mov (sp)+, r3
+005332   ......                  777     	mov (sp)+, r2
+005334   ......                  778     	mov (sp)+, r1
+005336   ......                  779     	mov (sp)+, r0
+005340   ...... ...... ......    780     	mov #0, 2(sp)
+005346   ......                  781     	rts pc
+005350                           782     indeedLegal:
+005350   ......                  783     	mov (sp)+, r4
+005352   ......                  784     	mov (sp)+, r3
+005354   ......                  785     	mov (sp)+, r2
+005356   ......                  786     	mov (sp)+, r1
+005360   ......                  787     	mov (sp)+, r0
+005362   ...... ...... ......    788     	mov #1, 2(sp)
+005370   ......                  789     	rts pc
+                                 790     
+                                 791     ;Encode function, as described in the PDF. 
+005372   ......                  792     encode: mov r1, -(sp)	;push r1 on stack
+005374   ......                  793     	mov r2, -(sp)		;push r2 on stack
+005376   ......                  794     	mov r3, -(sp)		;push r3 on stack
+005400   ......                  795     	mov r4, -(sp)		;push r4 on stack
+005402   ......                  796     	mov r5, -(sp)		;push r5 on stack
+005404   ...... ......           797     	mov 14(sp), -(sp)	;push matrix on stack
+005410   ......                  798     	tst -(sp)			;allocate memory for isLegal result
+005412   ...... ......           799     	jsr pc, isLegal
+005416   ......                  800     	tst (sp)+			;check result
+005420   ......                  801     	beq encodeIllegal	;if illegal, save byte in output address unchanged
+005422   ......                  802     	tst (sp)+			;clear additional matrix address from stack
+005424   ...... ......           803     	mov 14(sp), r1     	;r1 now has the address of the first key
+005430   ...... ......           804     	movb 20(sp), r4		;the address of the first Text byte is stored in r4
+005434   ......                  805     	movb r4, r2			;move value of current Text byte to r2
+005436   ...... ......           806     	bic #360, r2		;store y value in r2
+005442   ......                  807     	movb r4, r3 		;move value of current Text byte to r3
+005444   ...... ......           808     	bic #3, r3			;clear first 4 bits
+005450   ...... ......           809     	ash #-4, r3			;store x value in r3
+005454   ......                  810     	br enyfind
+                                 811     
+                                 812     ;if matrix is illegal, save unchanged byte and exit
+005456   ...... ......           813     encodeIllegal:	mov 20(sp), r1		;r1 holds input byte
+005462   ...... ......           814     	mov 16(sp), r2;		;r2 holds output label
+005466   ......                  815     	movb r1, (r2)		;move unchanged byte to output label
+005470   ......                  816     	mov (sp)+, r5
+005472   ......                  817     	mov (sp)+, r4
+005474   ......                  818     	mov (sp)+, r3
+005476   ......                  819     	mov (sp)+, r2
+005500   ......                  820     	mov (sp)+, r1
+005502   ......                  821     	rts pc
+                                 822     	
+                                 823     ;yfind finds the address of the key which equals to y
+005504   ......                  824     enyfind:  movb (r1)+, r4		;first map key is stored in r4, and r1 is advanced by 1
+005506   ......                  825     	cmp r4, r2				;if y part is equal to the value of the key, continue
+005510   ......                  826     	bne enyfind
+005512   ...... ......           827     	add #-1, r1				;r1 is decremented to account for the previous incrementation 
+005516   ......                  828     	mov r1, r4				;r4 stores the address of the y key
+005520   ...... ......           829     	mov 14(sp), r1		;reset key pointer
+                                 830     	
+                                 831     ;enxfind finds the address of the key which equals to x
+005524   ......                  832     enxfind:  movb (r1)+, r5		;first map key is stored in r5, and r1 is advanced by 1
+005526   ......                  833     	cmp r5, r3				;if x part is equal to the value of the key, continue
+005530   ......                  834     	bne enxfind
+005532   ...... ......           835     	add #-1, r1				;r1 is decremented to account for the previous incrementation
+005536   ......                  836     	mov r1, r5 				;r5 stores address of x key
+005540   ...... ......           837     	mov 14(sp), r1		;reset key pointer
+                                 838     
+                                 839     ;diff calculates the location of x, y
+005544   ...... ......           840     endiff:   sub 14(sp), r4	;r4 now has the serial place of y in the key map
+005550   ...... ......           841     	sub 14(sp), r5		;r5 now has the serial place of x in the key map
+005554   ......                  842     	mov r4, r3				;r3 now has the serial place of y in the key map
+005556   ......                  843     	clr r2					;r2 is cleared to enable division of r2, r3
+005560   ......                  844     	clr r4					;r4 is cleared to enable division of r4, r5
+005562   ...... ......           845     	div #4, r2				;r2 stores the row of y, r3 stores the column of y
+005566   ...... ......           846     	div #4, r4				;r4 stores the row of x, r5 stores the column of x
+005572   ......                  847     	cmp r2, r4			;if rows are equal, proceed to case A
+005574   ......                  848     	beq CaseA			
+005576   ......                  849     	cmp r3, r5				;if columns are equal, proceed to case B
+005600   ......                  850     	beq CaseB
+005602   ......                  851     	br enCaseC				;else, proceed to case C
+                                 852     
+005604   ...... ......           853     CaseA:  cmp r3, #3			;if column of y is 3, it will be cleared in order to enable cyclic movement
+005610   ......                  854     	beq Subr3A
+005612   ...... ......           855     	cmp r5, #3				;if column of x is 3, it will be cleared in order to enable cyclic movement
+005616   ......                  856     	beq Subr5A
+005620   ...... ......           857     	add #1, r3				;y is moved right in a cyclic order
+005624   ...... ......           858     	add #1, r5				;x is moved right in a cyclic order
+005630   ......                  859     	br engetLower				;proceed to calculate value of W
+005632   ...... ......           860     Subr3A: mov #-1, r3				;column of y is cleared to enable cyclic movement
+005636   ......                  861     		br CaseA
+005640   ...... ......           862     Subr5A: mov #-1, r5				;column of x is cleared to enable cyclic movement
+005644   ......                  863     		br CaseA
+                                 864     		
+005646   ...... ......           865     CaseB:  cmp r2, #3			;if row of y is 3, it will be cleared in order to enable cyclic movement
+005652   ......                  866     	beq Subr2B
+005654   ...... ......           867     	cmp r4, #3				;if row of x is 3, it will be cleared in order to enable cyclic movement
+005660   ......                  868     	beq Subr4B
+005662   ...... ......           869     	add #1, r2				;y is moved down in a cyclic order
+005666   ...... ......           870     	add #1, r4				;x is moved down in a cyclic order
+005672   ......                  871     	br engetLower				;proceed to calculate value of W
+005674   ...... ......           872     Subr2B: mov #-1, r2				;row of y is cleared to enable cyclic movement
+005700   ......                  873     		br CaseB
+005702   ...... ......           874     Subr4B: mov #-1, r4				;row of x is cleared to enable cyclic movement
+005706   ......                  875     		br CaseB
+                                 876     		
+005710   ......                  877     enCaseC: movb r3, r1			;column of y is stored in a temp register
+005712   ......                  878     	movb r5, r3				;column of y is changed to the column of x
+005714   ......                  879     	movb r1, r5				;column of x is changed to the column of y
+005716   ......                  880     	br engetLower				;proceed to calculate value of W
+                                 881     
+                                 882     ;gets lower 4 bits of output
+005720   ...... ......           883     engetLower: cmp r2, #0		;if row of lower 4 bits is zero, the loop is finished
+005724   ......                  884     	beq engetUpper
+005726   ...... ......           885     	add #4, r3				;4 is added to the r3 register to get the place of the lower bits in the map
+005732   ......                  886     	sob r2, engetLower
+005734   ......                  887     	br engetUpper				;proceed to calculate upper 4 bits
+                                 888     
+                                 889     ;gets higher 4 bits of output
+005736   ...... ......           890     engetUpper: cmp r4, #0		;if row of higher 4 bits is zero, the loop is finished
+005742   ......                  891     	beq enFinal
+005744   ...... ......           892     	add #4, r5				;4 is added to the r5 register to get the place of the higher bits in the map
+005750   ......                  893     	sob r4, engetUpper
+005752   ......                  894     	br enFinal				;the serial place of the lower 4 bits in the map is stored in r3, and that of the higher - in r5
+                                 895     	
+                                 896     ;calculates output byte and stores it in the output label
+                                 897     ;checks if program has completed its operation
+005754                           898     enFinal:
+005754   ...... ......           899     	add 14(sp), r3		;the address of the first key is added to r3 to get the address of the value of lower 4 bits
+005760   ...... ......           900     	add 14(sp), r5		;the address of the first key is added to r5 to get the address of the value of upper 4 bits
+005764   ......                  901     	movb (r3), r2			;r2 now stores value of lower 4 bits
+005766   ......                  902     	movb (r5), r4			;r4 now stores value of higher 4 bits
+005770   ...... ......           903     	ash #4, r4				;r4 is shifted 4 times to the left to enable addition of lower 4 bits
+005774   ......                  904     	add r2, r4				;r4 now stores 8 bits: first the lower 4, and then the upper 4. This is the needed result.
+005776   ...... ......           905     	mov 16(sp), r1			;address of first Output byte is added to r1
+006002   ......                  906     	movb r4, (r1)			;the encryption/decryption result is saved in the Output label 
+006004   ......                  907     	mov (sp)+, r5
+006006   ......                  908     	mov (sp)+, r4
+006010   ......                  909     	mov (sp)+, r3
+006012   ......                  910     	mov (sp)+, r2
+006014   ......                  911     	mov (sp)+, r1
+006016   ......                  912     	rts pc
+                                 913     	
+                                 914     ;-------test for part B----------
+                                 915     
+006020   ...... ...... ......    916     Secret: .byte 273, 217, 206, 067, 364, 275, 205, 201, 275, 126, 201, 205, 122, 267, 275, 210, 201, 271, 275, 267, 201, 044, 275, 067, 201, 365, 206, 267, 225
+006055      ...                  917     .even
+006056   ......                  918     SecretLen: .word 29.
+                                 919     
+                                 920     ; expected result:
+                                 921     ;Full matrix: .byte 11, 7, 13, 2, 12, 3, 0, 15, 10, 17, 1, 6, 16, 4, 14, 5
+                                 922     ;Output: .ascii<what? no money for you today.>
+                                 923     
+006060                           924     .even
+006060   ...... ...... ......    925     Dictionary: .ascii<hey@hello@why@you@today@@want@no@money@for@you@did@it@atam@what@>
+                                 926     ;                                           ^^ [0-length word]
+006160                           927     .even
+006160   ......                  928     DicLen: .word 15.
+006162   ...... ...... ......    929     ParMat: .byte 11, 7, 13, -1, -1, 3, -1, -1, 10, 17, 1, 6, 16, 4, 14, -1
+006202                           930     .even
+                                 931     
+006202   ...... ...... ......    932     Output: .blkw 15
+                                 933     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                 934     ;for boazMain:
+006234   ...... ...... ......    935     HolesArray: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		*** error  3 in part2.s11 - doubly defined label.
+006254   ...... ...... ......    936     Sequence: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		*** error  3 in part2.s11 - doubly defined label.
+006274   ...... ...... ......    937     Collection: .byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		*** error  3 in part2.s11 - doubly defined label.
+006314      ...                  938     Length: .byte 0		 
+		*** error  3 in part2.s11 - doubly defined label.
+                                 939     
+                                 940     ;----------test for part A---------- 
+006315   ...... ...... ......    941     Keys:  .byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17 ;M1
+		*** error  3 in part2.s11 - doubly defined label.
+006335   ...... ...... ......    942            .byte 17, 2, 15, 11, 3, 10, 5, 13, 1, 4, 14, 12, 0, 6, 7, 16 ;M2
+006355   ...... ...... ......    943            .byte 17, 2, 15, 11, 3, 10, 5, 13, 1, 4, 14, 2, 0, 6, 7, 16 ;M3 - illegal
+006375   ...... ...... ......    944     	   .byte 13, 0, 3, 2, 16, 14, 6, 11, 1, 7, 5, 15, 12, 10, 17, 4 ;M4
+006415      ...                  945     .even
+006416   ...... ......           946     Txt2: .ascii <Atam>
+		*** error  3 in part2.s11 - doubly defined label.
+006422                           947     .even
+006422   ...... ...... ......    948     Out5: .blkw 9.
+		*** error  3 in part2.s11 - doubly defined label.
+006444   ......                  949     KeysLen: .word 4
+		*** error  3 in part2.s11 - doubly defined label.
+006446   ...... ...... ......    950     Out8: .blkw 37.
+		*** error  3 in part2.s11 - doubly defined label.
+006560   ...... ...... ......    951     TextList: .word Txt1, 11., 0, Out1, Node1
+		*** error  3 in part2.s11 - doubly defined label.
+006572   ...... ...... ......    952     Txt4: .ascii <today is thursday>
+		*** error  3 in part2.s11 - doubly defined label.
+006613      ...                  953     .even
+006614   ...... ...... ......    954     Node2: .word Txt3, 4, 1, Out3, Node3
+		*** error  3 in part2.s11 - doubly defined label.
+006626   ...... ...... ......    955     Txt7: .ascii <AD MATAI!@#@!n@TvkJ-E}u^X8-rf~!eU58Wxs*k_GaH*G4F@!4@#!@#SEDRERT$4 rrteert>
+		*** error  3 in part2.s11 - doubly defined label.
+006737      ...                  956     .even
+006740   ...... ...... ......    957     Node3: .word Txt4, 17., 0, Out4, Node4
+		*** error  3 in part2.s11 - doubly defined label.
+006752   ...... ...... ......    958     Txt6: .ascii <ATAM, MATAM AND ROCKNROLL>
+		*** error  3 in part2.s11 - doubly defined label.
+007003      ...                  959     .even
+007004   ...... ...... ......    960     Node4: .word Txt5, 18., 0, Out5, Node5
+		*** error  3 in part2.s11 - doubly defined label.
+007016   ...... ...... ......    961     Out1: .blkw 6.
+		*** error  3 in part2.s11 - doubly defined label.
+007032   ...... ...... ......    962     Node5: .word Txt6, 25., 1, Out6, Node6
+		*** error  3 in part2.s11 - doubly defined label.
+007044   ...... ...... ......    963     Out6: .blkw 13.
+		*** error  3 in part2.s11 - doubly defined label.
+007076   ...... ...... ......    964     Node6: .word Txt7, 73., 1, Out7, Node7
+		*** error  3 in part2.s11 - doubly defined label.
+007110   ...... ...... ......    965     Txt1: .ascii<I love atam>
+		*** error  3 in part2.s11 - doubly defined label.
+007123      ...                  966     .even
+007124   ...... ...... ......    967     Out7: .blkw 37.
+		*** error  3 in part2.s11 - doubly defined label.
+007236   ...... ...... ......    968     Node7: .word Txt7, 73., 0, Out8, 0
+		*** error  3 in part2.s11 - doubly defined label.
+007250   ...... ......           969     Txt3: .byte 044, 214, 044, 302
+		*** error  3 in part2.s11 - doubly defined label.
+007254   ...... ...... ......    970     Out4: .blkw 9.
+		*** error  3 in part2.s11 - doubly defined label.
+007276   ...... ...... ......    971     Txt5: .ascii <tommorow is FrIdAy>
+		*** error  3 in part2.s11 - doubly defined label.
+007320                           972     .even
+007320   ...... ...... ......    973     Node1: .word Txt2, 4, 0, Out2, Node2
+		*** error  3 in part2.s11 - doubly defined label.
+007332   ...... ......           974     Out2: .blkw 2.
+		*** error  3 in part2.s11 - doubly defined label.
+007336   ...... ......           975     Out3: .blkw 2.
+		*** error  3 in part2.s11 - doubly defined label.
+
+
+	S Y M B O L   T A B L E
+	=======================
+
+SYMBOL    VALUE   TYPE
+------    -----   ----
+main      001000  text     
+TextList  006560  text     
+nodeHand  004162  text     
+boazMain  001576  text     
+initColl  001604  text     
+initHole  001670  text     
+a1729     001612  text     
+ParMat    006162  text     
+skip1     001664  text     
+Collecti  006274  text     
+Sequence  006254  text     
+while1    001674  text     
+step3     001746  text     
+AddHole   001722  text     
+HolesArr  006234  text     
+Length    006314  text     
+AddSeque  001760  text     
+step4     002006  text     
+isLegal   005236  text     
+advSeq    002100  text     
+Secret    006020  text     
+decodeSe  000000  undef    
+SecretLe  006056  text     
+Output    006202  text     
+isSenten  002130  text     
+returnbm  000000  undef    
+nextComp  002724  text     
+while1is  002166  text     
+returnis  002340  text     
+getWord   002356  text     
+hasNikud  002324  text     
+toIsWord  002264  text     
+isWord    002514  text     
+falseis   002330  text     
+while1gw  002372  text     
+findLeng  002452  text     
+while1p1  002410  text     
+while1p2  002424  text     
+while2gw  002462  text     
+returngw  002504  text     
+Dictiona  006060  text     
+DicLen    006160  text     
+cmpWord   002556  text     
+getNextW  002600  text     
+wordFoun  002666  text     
+notFound  002630  text     
+getNextA  002620  text     
+findnc    002774  text     
+return    003032  text     
+easync    003024  text     
+cyclicnc  003006  text     
+Keys      006315  text     
+Txt2      006416  text     
+Out5      006422  text     
+KeysLen   006444  text     
+Out8      006446  text     
+Txt1      007110  text     
+Out1      007016  text     
+Node1     007320  text     
+Txt4      006572  text     
+Node2     006614  text     
+Txt3      007250  text     
+Out3      007336  text     
+Node3     006740  text     
+Txt7      006626  text     
+Out4      007254  text     
+Node4     007004  text     
+Txt6      006752  text     
+Txt5      007276  text     
+Node5     007032  text     
+Out6      007044  text     
+Node6     007076  text     
+Out7      007124  text     
+Node7     007236  text     
+Out2      007332  text     
+noNewNod  004156  text     
+systemAu  004206  text     
+system    004252  text     
+matrixCy  004354  text     
+systemEn  004374  text     
+getMatri  004414  text     
+illegalM  004466  text     
+check     004524  text     
+newMatCy  004366  text     
+endLengt  004406  text     
+getNextM  004442  text     
+yfind     004572  text     
+xfind     004612  text     
+diff      004632  text     
+encrypt   004674  text     
+decrypt   005022  text     
+eCaseA    004706  text     
+eCaseB    004750  text     
+CaseC     005012  text     
+eSubr3A   004734  text     
+eSubr5A   004742  text     
+getLower  005140  text     
+eSubr2B   004776  text     
+eSubr4B   005004  text     
+dCaseA    005034  text     
+dCaseB    005076  text     
+dSubr3A   005062  text     
+dSubr5A   005070  text     
+dSubr2B   005124  text     
+dSubr4B   005132  text     
+getUpper  005156  text     
+Final     005174  text     
+isLegalL  005264  text     
+isLegalA  005306  text     
+isIllega  005326  text     
+indeedLe  005350  text     
+encode    005372  text     
+encodeIl  005456  text     
+enyfind   005504  text     
+enxfind   005524  text     
+endiff    005544  text     
+CaseA     005604  text     
+CaseB     005646  text     
+enCaseC   005710  text     
+Subr3A    005632  text     
+Subr5A    005640  text     
+engetLow  005720  text     
+Subr2B    005674  text     
+Subr4B    005702  text     
+engetUpp  005736  text     
+enFinal   005754  text     

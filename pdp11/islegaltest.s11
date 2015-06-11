@@ -1,0 +1,47 @@
+. = torg + 1000
+main: tst -(sp)
+	  mov #Matrix, -(sp)
+	  jsr pc, isLegal
+	  tst (sp)+
+	  mov (sp)+, r0
+
+isLegal: 	mov r0, -(sp) ;10
+	mov r1, -(sp) ;6
+	mov r2, -(sp) ;4
+	mov r3, -(sp) ;2
+	mov r4, -(sp) ;0
+	mov 14(sp), r0			;address of first matrix is stored in r0
+	mov r0, r4				;r4 won't be changed
+	clr r1					;r1 cleared and prepared for storing the current element
+	clr r2					;r2 holds the matrix index
+	br isLegalLoop
+isLegalLoop: movb (r0)+, r3 ;r3 stores the matrix element value
+	cmp r3, r1				;check if matrix element holds the checked key
+	beq isLegalAux			;if index element equals key, continue
+	cmp r2, #17
+	beq isIllegal
+	add #1, r2				;matrix index is 
+	br isLegalLoop
+isLegalAux: cmp r1, #17
+	beq indeedLegal
+	add #1, r1 				;increment index
+	clr r2					;matrix index is cleared
+	mov r4, r0
+	br isLegalLoop
+isIllegal:
+	mov (sp)+, r4
+	mov (sp)+, r3
+	mov (sp)+, r2
+	mov (sp)+, r1
+	mov (sp)+, r0
+	mov #0, 4(sp)
+	rts pc
+indeedLegal:
+	mov (sp)+, r4
+	mov (sp)+, r3
+	mov (sp)+, r2
+	mov (sp)+, r1
+	mov (sp)+, r0
+	mov #1, 4(sp)
+	rts pc
+Matrix: .byte 1, 2, 3 ,4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17
