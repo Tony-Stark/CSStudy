@@ -5,6 +5,8 @@
 
     @author thejedi
     @version 1.0 26/03/2016
+    
+    (!) For any mistake/problem/question, please contact me at thejedi@null.net
     */
 #include <cmath>
 #include <cstdio>
