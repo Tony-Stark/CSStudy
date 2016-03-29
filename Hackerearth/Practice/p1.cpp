@@ -4,7 +4,7 @@
 using namespace std;
 
 int main()
-{
+{ //
 int c=0;
 int count=0;
 int iter=1;
