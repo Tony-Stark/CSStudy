@@ -1,6 +1,9 @@
 import java.util.*; 
-
+interface Method{  
+    Object apply(int a, Object u);  
+}  
 public class BinaryTree<T> {
+	
 	Node<T> root;
 	public void add(int key) {
 		Node<T> z =new Node<T>(key);
@@ -28,6 +31,15 @@ public class BinaryTree<T> {
 		else
 			y.right=z;
 	}
+	
+	private void innerVisitGeneric(Node<T> node,Method method,Object u) {
+	    Object o=method.apply(node.key,u);
+		if (node.left!=null)  innerVisitGeneric(node.left,method,o);
+		if (node.right!=null) innerVisitGeneric(node.right,method,o);
+	}
+	public void visitGeneric(Method method,Object u) {
+	    innerVisitGeneric(this.root,method,u);
+	}
 	/**
 	 * Traversing in pre/in/post order
 	 * @param mode chooses the traversing mode:
@@ -41,13 +53,6 @@ public class BinaryTree<T> {
 	    stack.push(node.toString());
 		if (node.left!=null && (mode==0))  visit(node.left,mode,stack);
 		if (node.right!=null && (mode==0||mode==1)) visit(node.right,mode,stack);
-	}
-	public static void visitKey(Node<?> node,int mode,Stack<Integer> stack) {
-		if (node.left!=null &&(mode==1||mode==2))  visitKey(node.left,mode,stack);
-	    if (node.right!=null &&(mode==2)) visitKey(node.right,mode,stack);
-	    stack.push(node.key);
-		if (node.left!=null && (mode==0))  visitKey(node.left,mode,stack);
-		if (node.right!=null && (mode==0||mode==1)) visitKey(node.right,mode,stack);
 	}
 	public String toStringAll() {
 		Stack<String> stack0 = new Stack<String>();

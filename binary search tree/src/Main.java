@@ -3,7 +3,14 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import java.awt.*;
 //import java.util.Stack;
+
 public class Main extends JFrame {
+	
+	 public static DefaultMutableTreeNode printAux(int a,DefaultMutableTreeNode t) {
+		 DefaultMutableTreeNode next =new DefaultMutableTreeNode(a);
+		 t.add(next);
+		 return next;
+	}
 	void button_test(Container container) {
 		JButton b1= new JButton("Button1");
 		JButton b2= new JButton("Button2");
@@ -15,16 +22,12 @@ public class Main extends JFrame {
 
 	}
 	public static void visitWithJTree(DefaultMutableTreeNode curr,Node<?> node) {
-		curr.add(new DefaultMutableTreeNode(node.key));
-		System.out.print("\n||"+curr.getFirstChild().toString());
-		System.out.println(curr.getLastChild().toString()+"||");
-		if (node.left!=null) {
-			visitWithJTree((DefaultMutableTreeNode) curr.getLastChild(),node.left);
-			}
-		if (node.right!=null) {
-			visitWithJTree((DefaultMutableTreeNode) curr.getLastChild(),node.right);
-			}
-		  
+		 DefaultMutableTreeNode next =new DefaultMutableTreeNode(node.key);
+		 curr.add(next);
+		if (node.left!=null) 
+			visitWithJTree(next,node.left);
+		if (node.right!=null) 
+			visitWithJTree(next,node.right);
 	}
 	public static void main(String[] args){		
 		Main app= new Main("Hello World");
@@ -45,7 +48,12 @@ public class Main extends JFrame {
 		app.button_test(panel);
 		DefaultMutableTreeNode top_origin= new DefaultMutableTreeNode("Tree");
 		DefaultMutableTreeNode top= top_origin;
-		visitWithJTree(top,bt.root);
+		//visitWithJTree(top,bt.root);
+		Method method = (a,t)->{
+			Object o=printAux(a,(DefaultMutableTreeNode)t);
+		return o;
+		};
+		bt.visitGeneric(method,top);
 		JTree jt1=new JTree(top_origin);
 		
 		panel2.add(jt1);
