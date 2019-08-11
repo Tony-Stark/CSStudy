@@ -1,0 +1,27 @@
+li{display:none;}
+.mdl-list__item{ 
+transition:0.1s;
+}
+.mdl-list__item-primary-content{
+cursor:pointer;
+}
+.mdl-list__item-secondary-action{
+cursor:pointer;
+}
+.mdl-list__item:hover{ 
+background:rgb(0,0,255,0.07);
+color:#fffffb;
+}
+
+.mdl-list__item:hover .remove-todo  { color: black; }
+.striked {
+text-decoration: line-through!important;
+}
+#headerimg {
+background: url('backgorund.jpg');
+height:10vh; background-repeat:no-repeat;
+background-color:#BBAADD;
+}
+#ul-container{
+    background:#c5cae9;
+}
