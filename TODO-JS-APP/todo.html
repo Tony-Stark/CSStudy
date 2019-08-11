@@ -1,0 +1,68 @@
+<!doctype html>
+<html dir="rtl" lang="he">
+
+    <head>
+      <meta charset="utf-8">
+      <title>רשימת משימות</title>
+      <meta name="description" content="todo-list-app">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+      <link rel="stylesheet" href="https://cdn.rtlcss.com/mdl/1.2.1/material.rtl.min.css" integrity="sha384-1z92ngOM16ZY2CickWgUrydff0ExYv2Fn8/6WUwsWxgrcJym3w+ogWivpi3nEh0G" crossorigin="anonymous">
+      <script src="https://cdn.rtlcss.com/mdl/1.2.1/material.min.js" integrity="sha384-Llr4wcq+yhgKO4ZQRN7Sx88cvQneoOOxcysisJKroD8nKQA7y0NyriabEaMYsvWW" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="styles.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+      <script src="app.js"></script>
+    </head>
+    <body>
+      <!--[if IE]>
+        <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+      <![endif]-->
+        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+          <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+              <!-- Title -->
+              <span class="mdl-layout-title">רשימת משימות</span>
+            </div>
+            <div id="headerimg" class="mdl-js-ripple-effect">
+             &nbsp
+            </div>
+          </header>
+
+          <main class="mdl-layout__content">
+            <div class="mdl-grid">
+                <div class="mdl-cell mdl-cell--3-col">&nbsp</div>
+                <div class="mdl-cell mdl-cell--6-col">
+                    <div class="mdl-cell mdl-cell--12-col mdl-card mdl-shadow--2dp" id="ul-container">
+                        <ul class="mdl-list" id="todo_list">
+                        </ul>
+            
+                    </div>
+                    <div>
+                        <form action="#">
+                            <span class="mdl-chip__text">
+                                <div class="mdl-textfield mdl-js-textfield">
+                                    <input class="mdl-textfield__input" type="text" id="input">
+                                    <label class="mdl-textfield__label" for="sample1">הוסף משימה לביצוע...</label>
+                                </div>
+                            </span>
+                            <button type="button" id="add_todo_btn" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored">
+                                <i class="material-icons">add</i>
+                            </button>
+
+                        </form>
+                    </div>
+                </div>
+                <div class="mdl-cell mdl-cell--3-col">&nbsp</div>
+            </div>
+            <footer>
+                     <p>
+                             כנסו לגיטהאב שלי! :) 
+                         <button onclick="window.location.href = 'https://github.com/Tony-Stark';"class="mdl-mini-footer__social-btn">
+                            <i class="material-icons">notifications_active</i>
+                          </button>
+                     </p> 
+                </footer>
+          </main>
+        </div>
+    </body>
+</html>
