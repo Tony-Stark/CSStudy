@@ -1,5 +1,7 @@
 .= torg + 1000
 
+main: MOV r0, #200
+=======
 ;Main function manages the program, and sends it to the appropriate
 ;functions.
 main: mov #main, sp			;set stack pointer
