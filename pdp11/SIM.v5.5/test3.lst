@@ -1,0 +1,100 @@
+Technion Computer Science Department -- PDP/11 X-Assembler Version (5.5) AA.
+
+
+	S O U R C E    F I L E    :    test3.s11
+	========================================
+
+000000                             1     .= torg + 2000
+002000   012706 002000             2     main: mov #main, sp
+                                   3     
+                                   4     ;add #100, (sp)
+002004   005746                    5     	  tst -(sp)
+002006   012746 002272             6     	  mov #X, -(sp)
+002012   012746 000003             7     	  mov #3., -(sp)
+002016   004767 000010             8     	  jsr pc, isWord
+002022   062706 000004             9     	  add #4,sp
+002026   012600                   10     	  mov (sp)+, r0
+002030   000000                   11     	  halt
+                                  12     
+002032   010046                   13     isWord: mov r0, -(sp)
+002034   010146                   14     	mov r1, -(sp)
+002036   010246                   15     	mov r2, -(sp)
+002040   010346                   16     	mov r3, -(sp)
+002042   010446                   17     	mov r4, -(sp)
+002044   010546                   18     	mov r5, -(sp)
+002046   062706 000016            19     	add #16, sp
+002052   012600                   20     	mov (sp)+, r0		;r0 now holds the length of the word
+002054   011601                   21     	mov (sp), r1		;r1 now holds the address of the word
+002056   012702 002236            22     	mov #Dictionary, r2	;r2 will hold the dictionary address
+002062   012703 002270            23     	mov #DicLen, r3		;r3 holds the DicLen address
+002066   111303                   24     	movb (r3), r3		;r3 holds the dictionary length
+002070   005004                   25     	clr r4				;r4 will hold the current word char iterator
+002072   010105                   26     	mov r1, r5
+002074   122225                   27     cmpWord: cmpb (r2)+, (r5)+
+002076   001007                   28     	bne getNextWord
+002100   005204                   29     	inc r4
+002102   020400                   30     	cmp r4, r0
+002104   001436                   31     	beq wordFound
+002106   121227 000100            32     	cmpb (r2), #100
+002112   001401                   33     	beq getNextWord
+002114   000767                   34     	br cmpWord
+002116   005303                   35     getNextWord: dec r3
+002120   005703                   36     	tst r3
+002122   001411                   37     	beq notFound
+002124   010105                   38     	mov r1, r5
+002126   122227 000100            39     	cmpb (r2)+, #100
+002132   001760                   40     	beq cmpWord
+002134   000400                   41     	br getNextAux
+002136   122227 000100            42     getNextAux: cmpb (r2)+, #100
+002142   001375                   43     	bne getNextAux
+002144   000753                   44     	br cmpWord
+002146   062706 177760            45     notFound: add #-18, sp
+002152   012605                   46     	mov (sp)+, r5
+002154   012604                   47     	mov (sp)+, r4
+002156   012603                   48     	mov (sp)+, r3
+002160   012602                   49     	mov (sp)+, r2
+002162   012601                   50     	mov (sp)+, r1
+002164   012600                   51     	mov (sp)+, r0
+002166   011666 000004            52     	mov (sp), 4(sp)
+002172   012766 000000 000006     53     	mov #0, 6(sp)
+002200   000207                   54     	rts pc
+002202   062706 177760            55     wordFound: add #-18, sp
+002206   012605                   56     	mov (sp)+, r5
+002210   012604                   57     	mov (sp)+, r4
+002212   012603                   58     	mov (sp)+, r3
+002214   012602                   59     	mov (sp)+, r2
+002216   012601                   60     	mov (sp)+, r1
+002220   012600                   61     	mov (sp)+, r0
+002222   011666 000004            62     	mov (sp), 4(sp)
+002226   012766 000001 000006     63     	mov #1, 6(sp)
+002234   000207                   64     	rts pc
+002236      120    145    162     65     Dictionary: .ascii<Perfect@job@is@Secret@top@> 
+            146    145    143            
+            164    100    152            
+            157    142    100            
+            151    163    100            
+            123    145    143            
+            162    145    164            
+            100    164    157            
+            160    100                   
+002270                            66     .even
+002270   000005                   67     DicLen: .word 5
+002272      142    157    142     68     X: .ascii<bob>
+002275      000                   69     .even
+
+
+	S Y M B O L   T A B L E
+	=======================
+
+SYMBOL    VALUE   TYPE
+------    -----   ----
+main      002000  text     
+X         002272  text     
+isWord    002032  text     
+Dictiona  002236  text     
+DicLen    002270  text     
+cmpWord   002074  text     
+getNextW  002116  text     
+wordFoun  002202  text     
+notFound  002146  text     
+getNextA  002136  text     

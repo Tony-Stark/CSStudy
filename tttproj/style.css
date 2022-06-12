@@ -1,0 +1,46 @@
+body{
+    background-color: #f9f9f9;
+    font-family: 'Ubuntu', sans-serif;
+}
+.square {
+    float:left;
+    position: relative;
+    width: 30%;
+    height: 30%;
+    margin:1.66%;
+    background-color:#AABBCC;
+    overflow:hidden;
+    font-weight:900;
+    font-size:100px;
+    text-align: center;
+    vertical-align: middle;
+    font-family: 'Luckiest Guy', cursive;
+    color: ivory
+
+}
+.square:hover { 
+    opacity: 0.8;
+}
+.board{
+    float:left;
+    width: 400px;
+    height:400px;
+    margin: 0;
+    background-color: #f3f3f3
+}
+#MessageBox{
+    display: none;
+    width: 25%;
+    height: 10%;
+    background-color:#7777CC;
+    margin-left: 2.3%;
+    margin-top: 5%
+    font-weight:bold;
+    font-size:70px;
+    float:left;
+    vertical-align: middle;
+    text-align: center;
+    font-family: 'Ubuntu', cursive;
+    color: white;
+    text-shadow: 2px 2px 5px lightblue;
+}

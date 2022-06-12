@@ -1,0 +1,37 @@
+;;nextComp test
+main: mov #Collection, -(sp)
+      mov #Sequence, -(sp)
+	  mov #5, -(sp)
+nextComp: ;length           20
+         ;sequence         16
+         ;collection       14
+         mov r0, -(sp)    ;12
+         mov r1, -(sp)    ;10
+         mov r2, -(sp)    ;6
+         mov r3, -(sp)    ;4
+         mov r4, -(sp)    ;2
+         mov r5, -(sp)   ;0
+         mov (sp)+, r0 ;seq addr    
+         mov (sp)+, r1 ;col addr
+         mov (sp), r2  ;length   
+         clr r3 ;seq iterator
+         clr r4 ; col iterator
+         add #20,sp
+         mov (sp)+, r0
+         dec r0
+         mov r0, r2
+         add @(sp)+, r2
+         mov @(sp),r4
+         findnc: cmp(r4)+,(r2)
+                beq step2
+                inc r3
+                br findnc
+         step2: cmp r3, r0
+         beq cyclicnc
+         inc r3
+         add 14(sp),r3
+         movb (r3),(r2)
+         rts pc
+         cyclicnc: movb @14(sp), r2
+         dec r2
+         br findnc

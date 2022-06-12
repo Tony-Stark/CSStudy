@@ -1,0 +1,275 @@
+boazMain: clr r0
+		 clr r1
+		 clr r3
+initCollSeq: cmpb r1, #16.
+		    beq initHoles
+initCollSeqp1: cmpb r0, #16.
+			  beq initCollSeq
+			  mov #ParMat, r5
+			  add r0, r5
+			  cmpb (r5), r1
+			  bne skip1
+			  mov #Collection, r5
+		      add r3, r5
+			  movb r0, (r5)
+			  mov #Sequence, r5
+		      add r3, r5
+			  movb r0, (r5)
+			  bne skip1
+			  inc r3
+		   	  inc r1
+			  clr r0
+			  br initCollSeq
+skip1: inc r0
+	   br initCollSeqp1
+initHoles: clr r0
+		  clr r1
+while1:  cmpb r0, #16.
+		beq step3
+		mov #ParMat, r5
+		add r0, r5
+		cmpb (r5),#-1
+		beq AddHole
+		inc r0
+		br while1
+AddHole:mov #ParMat, r5
+		add r0, r5 
+		mov #HolesArray, r4
+		add r1, r4
+		mov (r5), (r4)
+		inc r1
+		inc r0
+		br while1
+step3: mov r3, #Length
+	  clr r0
+	  clr r1
+	  clr r3
+AddSequenceToMatrix: cmpb r3, Length.
+				    beq step4
+					mov #HolesArray, r5
+		            add r1, r5
+					mov Sequence(r0),(r5)
+					inc r0
+					inc r1
+					br AddSequenceToMatrix
+step4: ;parmat isLegal?
+	   tst -(sp)
+	   mov #ParMat,-(sp) 
+	   jsr pc, isLegal
+	   tst (sp)+
+	   cmp (sp)+, #1
+	   bne advSeq ;if yes: decode.
+	   mov #ParMat, -(sp)
+	   mov #Secret, -(sp)
+	   jsr pc, decode
+	   tst (sp)+
+	   tst (sp)+
+	   
+	   tst (sp)+
+	   mov #SecretLen,-(sp) 
+	   mov #Output,-(sp) 
+	   jsr pc, isSentence
+	   tst (sp)+
+	   tst (sp)+
+	   cmp (sp)+, #1
+	   beq returnbm
+advSeq: mov #Collection, -(sp)
+       mov #Sequence, -(sp)
+	   mov #Length, -(sp)
+       jsr pc, nextComp
+	   tst (sp)+
+	   tst (sp)+
+	   tst (sp)+
+	   br AddSequenceToMatrix
+		     ;if yes mov to output and we're done.
+			 ;if not; nextComp and branch AddSequenceToMatrix
+		;if not: nextComp and branch AddSequenceToMatrix
+;;;; Alright, now we only have to write the DECODE and IsSentence
+;;;;;;IsSentence;;;;;
+isSentence: ;output 22
+			; secret 20
+           ;secretlen 16
+		   mov r0, -(sp) ;12
+	       mov r1, -(sp) ;10
+	       mov r2, -(sp) ;6
+	       mov r3, -(sp) ;4
+	       mov r4, -(sp) ;2
+	       mov r5, -(sp) ;0
+		   clr r0
+		   clr r1
+		   clr r2
+		   clr r3
+		   clr r4
+		   clr r5
+		   mov #1,22(sp)
+while1is: cmpb r0, @16(sp)
+		  beq returnis
+		  tst -(sp)
+		  tst -(sp)
+		  mov @20(sp), -(sp)
+		  mov @16(sp), -(sp)
+		  mov r4, -(sp)
+		  jsr r5, getWord
+		  tst (sp)+
+		  tst (sp)+
+		  mov (sp)+,r1 ;address
+		  mov (sp)+,r2 ;length
+		  mov r2, r3
+		  add r1, r3
+		  dec r3
+		  cmpb (r3), #41
+		  beq hasNikud
+		  cmpb (r3), #54
+		  beq hasNikud
+		  cmpb (r3), #56
+		  beq hasNikud
+		  cmpb (r3), #77
+		  beq hasNikud
+toIsWord: tst -(sp)
+		  mov r1, -(sp)
+		  mov r2, -(sp)
+		  jsr pc, isWord
+		  tst (sp)+
+		  tst (sp)+
+		  cmpb (sp)+, #1
+		  bne falseis
+		  inc r4
+		  sub #Secret, r3
+		  add r3, r0
+		  jmp while1is
+hasNikud: dec r2
+	     br toIsWord
+falseis: mov #0,22(sp)
+		 br returnis
+returnis:        mov (sp)+, r5    ;12
+				 mov (sp)+, r4     ;10
+				 mov (sp)+, r3    ;6
+				 mov (sp)+, r2    ;4
+				 mov (sp)+, r1    ;2
+			   	 mov (sp)+, r0
+rts pc 
+
+decode: mov r1, -(sp)	;push r1 on stack
+	mov r2, -(sp)		;push r2 on stack
+	mov r3, -(sp)		;push r3 on stack
+	mov r4, -(sp)		;push r4 on stack
+	mov r5, -(sp)		;push r5 on stack
+	mov 14(sp), -(sp)	;push matrix on stack
+	tst -(sp)			;allocate memory for isLegal result
+	jsr pc, isLegal
+	tst (sp)+			;check result
+	beq decodeIllegal	;if illegal, save byte in output address unchanged
+	tst (sp)+			;clear additional matrix address from stack
+	mov 14(sp), r1     	;r1 now has the address of the first key
+	movb 20(sp), r4		;the address of the first Text byte is stored in r4
+	movb r4, r2			;move value of current Text byte to r2
+	bic #360, r2		;store y value in r2
+	movb r4, r3 		;move value of current Text byte to r3
+	bic #3, r3			;clear first 4 bits
+	ash #-4, r3			;store x value in r3
+	br enyfind
+
+;if matrix is illegal, save unchanged byte and exit
+decodeIllegal:	mov 20(sp), r1		;r1 holds input byte
+	mov 16(sp), r2;		;r2 holds output label
+	movb r1, (r2)		;move unchanged byte to output label
+	mov (sp)+, r5
+	mov (sp)+, r4
+	mov (sp)+, r3
+	mov (sp)+, r2
+	mov (sp)+, r1
+	rts pc
+	
+;yfind finds the address of the key which equals to y
+enyfind:  movb (r1)+, r4		;first map key is stored in r4, and r1 is advanced by 1
+	cmp r4, r2				;if y part is equal to the value of the key, continue
+	bne enyfind
+	add #-1, r1				;r1 is decremented to account for the previous incrementation 
+	mov r1, r4				;r4 stores the address of the y key
+	mov 14(sp), r1		;reset key pointer
+	
+;enxfind finds the address of the key which equals to x
+enxfind:  movb (r1)+, r5		;first map key is stored in r5, and r1 is advanced by 1
+	cmp r5, r3				;if x part is equal to the value of the key, continue
+	bne enxfind
+	add #-1, r1				;r1 is decremented to account for the previous incrementation
+	mov r1, r5 				;r5 stores address of x key
+	mov 14(sp), r1		;reset key pointer
+
+;diff calculates the location of x, y
+endiff:   sub 14(sp), r4	;r4 now has the serial place of y in the key map
+	sub 14(sp), r5		;r5 now has the serial place of x in the key map
+	mov r4, r3				;r3 now has the serial place of y in the key map
+	clr r2					;r2 is cleared to enable division of r2, r3
+	clr r4					;r4 is cleared to enable division of r4, r5
+	div #4, r2				;r2 stores the row of y, r3 stores the column of y
+	div #4, r4				;r4 stores the row of x, r5 stores the column of x
+	cmp r2, r4			;if rows are equal, proceed to case A
+	beq CaseA			
+	cmp r3, r5				;if columns are equal, proceed to case B
+	beq CaseB
+	br enCaseC				;else, proceed to case C
+
+CaseA:  cmp r3, #3			;if column of y is 3, it will be cleared in order to enable cyclic movement
+	beq Subr3A
+	cmp r5, #0				;if column of x is 3, it will be cleared in order to enable cyclic movement
+	beq Subr5A
+	sub #1, r3				;y is moved right in a cyclic order
+	sub #1, r5				;x is moved right in a cyclic order
+	br engetLower				;proceed to calculate value of W
+Subr3A: mov #-1, r3				;column of y is cleared to enable cyclic movement
+		br CaseA
+Subr5A: mov #-1, r5				;column of x is cleared to enable cyclic movement
+		br CaseA
+		
+CaseB:  cmp r2, #3			;if row of y is 3, it will be cleared in order to enable cyclic movement
+	beq Subr2B
+	cmp r4, #3				;if row of x is 3, it will be cleared in order to enable cyclic movement
+	beq Subr4B
+	add #1, r2				;y is moved down in a cyclic order
+	add #1, r4				;x is moved down in a cyclic order
+	br engetLower				;proceed to calculate value of W
+Subr2B: mov #-1, r2				;row of y is cleared to enable cyclic movement
+		br CaseB
+Subr4B: mov #-1, r4				;row of x is cleared to enable cyclic movement
+		br CaseB
+		
+enCaseC: movb r3, r1			;column of y is stored in a temp register
+	movb r5, r3				;column of y is changed to the column of x
+	movb r1, r5				;column of x is changed to the column of y
+	br engetLower				;proceed to calculate value of W
+
+;gets lower 4 bits of output
+engetLower: cmp r2, #0		;if row of lower 4 bits is zero, the loop is finished
+	beq engetUpper
+	add #4, r3				;4 is added to the r3 register to get the place of the lower bits in the map
+	sob r2, engetLower
+	br engetUpper				;proceed to calculate upper 4 bits
+
+;gets higher 4 bits of output
+engetUpper: cmp r4, #0		;if row of higher 4 bits is zero, the loop is finished
+	beq enFinal
+	add #4, r5				;4 is added to the r5 register to get the place of the higher bits in the map
+	sob r4, engetUpper
+	br enFinal				;the serial place of the lower 4 bits in the map is stored in r3, and that of the higher - in r5
+	
+;calculates output byte and stores it in the output label
+;checks if program has completed its operation
+enFinal:
+	add 14(sp), r3		;the address of the first key is added to r3 to get the address of the value of lower 4 bits
+	add 14(sp), r5		;the address of the first key is added to r5 to get the address of the value of upper 4 bits
+	movb (r3), r2			;r2 now stores value of lower 4 bits
+	movb (r5), r4			;r4 now stores value of higher 4 bits
+	ash #4, r4				;r4 is shifted 4 times to the left to enable addition of lower 4 bits
+	add r2, r4				;r4 now stores 8 bits: first the lower 4, and then the upper 4. This is the needed result.
+	mov 16(sp), r1			;address of first Output byte is added to r1
+	movb r4, (r1)			;the encryption/decryption result is saved in the Output label 
+	mov (sp)+, r5
+	mov (sp)+, r4
+	mov (sp)+, r3
+	mov (sp)+, r2
+	mov (sp)+, r1
+	rts pc
+
+
+

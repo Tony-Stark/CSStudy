@@ -1,0 +1,62 @@
+.= torg + 1000
+main: mov #main, sp
+	  tst -(sp)
+	  tst -(sp)
+	  jsr r5, getWord
+	  .word poop
+	  .word 17
+	  .word 2.
+	  mov (sp)+, r0
+	  mov (sp)+, r1
+	  halt
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+getWord: mov r0, -(sp) ;-reserve r0,r1,r2 value-;
+		 mov r1, -(sp) ;;
+		 mov r2, -(sp) ;;
+		 mov r3, -(sp) ;;
+		 mov r4, -(sp) ;;
+		 mov (r5)+, r0 ;sentence address
+		 mov (r5)+, r1 ;sentence length
+		 mov (r5)+, r2 ;i
+         clr r3
+				   
+		eat_space: cmpb (r0), #40
+				   bne worddd
+				   inc r0
+				   dec r1
+				   br eat_space
+				   
+		worddd: cmp r2,#1
+              beq shava
+			  dec r2
+        reach_space:  cmpb (r0), #40
+				   beq spaaaace
+				   inc r0
+				   dec r1
+				   br reach_space
+
+        spaaaace: br eat_space
+        shava:     mov r0,16(sp)
+		callen:    cmpb (r0), #40
+				   beq ddddone
+				   inc r3
+				   inc r0
+				   dec r1
+				   beq ddddone
+				   br callen
+				   
+		ddddone:  mov r3,14(sp) 		   
+				   
+		 returngw: mov (sp)+, r4
+				   mov (sp)+, r3
+				   mov (sp)+, r2
+				   mov (sp)+, r1
+				   mov (sp)+, r0
+	 rts r5
+. =  torg + 5000
+poop: .ascii<Have a good job>
+
+Dictionary:.ascii<Perfect@job@is@Secret@top@> 
+.even
+DicLen:.word 5
+

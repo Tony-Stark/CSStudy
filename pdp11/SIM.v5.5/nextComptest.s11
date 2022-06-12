@@ -1,0 +1,57 @@
+;;nextComp test
+. = torg + 1000
+main: mov #Collection, -(sp)
+      mov #Sequence, -(sp)
+	  mov #3, -(sp)
+	  jsr pc, nextComp
+	  mov (sp)+, r0
+	  mov (sp)+, r1
+	  mov (sp)+, r2
+	  halt
+nextComp: ;collection           22
+         ;sequence         20
+         ;length       16
+		 ;rts address      14
+         mov r0, -(sp)    ;12
+         mov r1, -(sp)    ;10
+         mov r2, -(sp)    ;6
+         mov r3, -(sp)    ;4
+         mov r4, -(sp)    ;2
+         mov r5, -(sp)   ;0
+		 ;add #14,sp
+         mov 22(sp), r1 ;col addr    
+         mov 20(sp), r2 ;seq addr
+         mov 16(sp), r0  ;length   
+         clr r3 ;seq iterator
+         clr r4 ; col index
+         dec r0 ;length - 1;
+		 mov r0, r5
+         ;mov r0, r2
+         add r0, r2
+		 mov 16(sp), r3
+		 inc r3
+		 
+         findnc: tst r3
+				beq return
+				cmpb (r1)+,(r2)
+                beq easync
+                sob r0, findnc
+		 cyclicnc: mov 22(sp), r1
+				  movb (r1), (r2)
+				  dec r2
+				  dec r3
+				  mov r5, r0
+                  br findnc
+         easync:  movb (r1), (r2)
+				 dec r3
+				 br return
+		 return: mov (sp)+, r5    ;12
+				 mov (sp)+, r4     ;10
+				 mov (sp)+, r3    ;6
+				 mov (sp)+, r2    ;4
+				 mov (sp)+, r1    ;2
+			   	 mov (sp)+, r0
+         rts pc
+         
+Collection: .byte 4, 10, 15 
+Sequence: .byte 4, 10, 15

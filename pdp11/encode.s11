@@ -1,0 +1,184 @@
+. = torg + 1000
+main: mov #Secret, -(sp)
+	  mov SecretLen, -(sp)
+	        mov #Output, -(sp)
+      mov #Matrix, -(sp)
+
+	  jsr pc, decodeSentence
+	  halt
+decodeSentence: mov r0, -(sp)
+				mov r1, -(sp)
+				mov r2, -(sp)
+				mov r3, -(sp)
+				mov r4, -(sp)
+				mov r5, -(sp)
+mov 22(sp),r0
+mov 24(sp), r1
+mov 20(sp), r2
+for1ds: movb (r1)+, r3
+		bic #177400 ,r3
+		mov r3, -(sp)
+	    mov r2, -(sp)
+        mov 22(sp), -(sp)
+		jsr pc, decode
+		add #6, sp
+		inc r2
+		sob r0, for1ds
+		mov (sp)+, r5
+		mov (sp)+, r4
+		mov (sp)+, r3
+		mov (sp)+, r2
+		mov (sp)+, r1
+		mov (sp)+, r0
+		rts pc
+decode: mov r1, -(sp)	;push r1 on stack 10
+	mov r2, -(sp)		;push r2 on stack 6
+	mov r3, -(sp)		;push r3 on stack 4
+	mov r4, -(sp)		;push r4 on stack 2
+	mov r5, -(sp)		;push r5 on stack 0
+	;tst -(sp) 			;allocate memory for isLegal result
+	;mov 14(sp), -(sp)	;push matrix on stack
+	;jsr pc, isLegal
+	;tst (sp)+			;check result
+	;beq decodeIllegal	;if illegal, save byte in output address unchanged
+	;tst (sp)+			;clear additional matrix address from stack
+	mov 14(sp), r1     	;r1 now has the address of the first key
+	movb 20(sp), r4		;the address of the first Text byte is stored in r4
+	bic #177400, r4
+	movb r4, r2			;move value of current Text byte to r2
+	bic #177760, r2		;store y value in r2
+	movb r4, r3 		;move value of current Text byte to r3
+	bic #177417, r3			;clear first 4 bits
+	ash #-4, r3			;store x value in r3
+	br deyfind
+	
+;yfind finds the address of the key which equals to y
+deyfind:  movb (r1)+, r4		;first map key is stored in r4, and r1 is advanced by 1
+	bic #177400, r4
+	cmp r4, r2				;if y part is equal to the value of the key, continue
+	bne deyfind
+	add #-1, r1				;r1 is decremented to account for the previous incrementation 
+	mov r1, r4				;r4 stores the address of the y key
+	mov 14(sp), r1		;reset key pointer
+	
+;dexfind finds the address of the key which equals to x
+dexfind:  movb (r1)+, r5		;first map key is stored in r5, and r1 is advanced by 1
+	bic #177400 ,r5
+	cmp r5, r3				;if x part is equal to the value of the key, continue
+	bne dexfind
+	add #-1, r1				;r1 is decremented to account for the previous incrementation
+	mov r1, r5 				;r5 stores address of x key
+	mov 14(sp), r1		;reset key pointer
+
+;diff calculates the location of x, y
+dediff:   sub 14(sp), r4	;r4 now has the serial place of y in the key map
+	sub 14(sp), r5		;r5 now has the serial place of x in the key map
+	mov r4, r3				;r3 now has the serial place of y in the key map
+	clr r2					;r2 is cleared to enable division of r2, r3
+	clr r4					;r4 is cleared to enable division of r4, r5
+	div #4, r2				;r2 stores the row of y, r3 stores the column of y
+	div #4, r4				;r4 stores the row of x, r5 stores the column of x
+	cmp r2, r4			;if rows are equal, proceed to case A
+	beq dCaseA			
+	cmp r3, r5				;if columns are equal, proceed to case B
+	beq dCaseB
+	br deCaseC				;else, proceed to case C
+
+dCaseA:  cmp r3, #0		;if column of y is 3, it will be cleared in order to enable cyclic movement
+	beq dSubr3A
+	cmp r5, #0			;if column of x is 3, it will be cleared in order to enable cyclic movement
+	beq dSubr5A
+	sub #1, r3				;y is moved right in a cyclic order
+	sub #1, r5				;x is moved right in a cyclic order
+	br degetLower				;proceed to calculate value of W
+dSubr3A: mov #4, r3				;column of y is cleared to enable cyclic movement
+		br dCaseA
+dSubr5A: mov #4, r5				;column of x is cleared to enable cyclic movement
+		br dCaseA
+		
+dCaseB:  cmp r2, #0			;if row of y is 3, it will be cleared in order to enable cyclic movement
+	beq dSubr2B
+	cmp r4, #0				;if row of x is 3, it will be cleared in order to enable cyclic movement
+	beq dSubr4B
+	sub #1, r2				;y is moved down in a cyclic order
+	sub #1, r4				;x is moved down in a cyclic order
+	br degetLower				;proceed to calculate value of W
+dSubr2B: mov #4, r2				;row of y is cleared to enable cyclic movement
+		br dCaseB
+dSubr4B: mov #4, r4				;row of x is cleared to enable cyclic movement
+		br dCaseB
+		
+deCaseC: movb r3, r1
+	bic #177400, r1
+			;column of y is stored in a temp register
+	movb r5, r3	
+	bic #177400, r3
+	;column of y is changed to the column of x
+	movb r1, r5	
+	bic #177400, r5
+	;column of x is changed to the column of y
+	br degetLower				;proceed to calculate value of W
+
+;gets lower 4 bits of output
+degetLower: cmp r2, #0		;if row of lower 4 bits is zero, the loop is finished
+	beq degetUpper
+	add #4, r3				;4 is added to the r3 register to get the place of the lower bits in the map
+	sob r2, degetLower
+	br degetUpper				;proceed to calculate upper 4 bits
+
+;gets higher 4 bits of output
+degetUpper: cmp r4, #0		;if row of higher 4 bits is zero, the loop is finished
+	beq deFinal
+	add #4, r5				;4 is added to the r5 register to get the place of the higher bits in the map
+	sob r4, degetUpper
+	br deFinal				;the serial place of the lower 4 bits in the map is stored in r3, and that of the higher - in r5
+	
+;calculates output byte and stores it in the output label
+;checks if program has completed its operation
+deFinal:
+	add 14(sp), r3		;the address of the first key is added to r3 to get the address of the value of lower 4 bits
+	add 14(sp), r5		;the address of the first key is added to r5 to get the address of the value of upper 4 bits
+	movb (r3), r2
+	bic #177400 ,r2
+	;r2 now stores value of lower 4 bits
+	movb (r5), r4	
+	bic #177400, r4
+	;r4 now stores value of higher 4 bits
+	ash #4, r4				;r4 is shifted 4 times to the left to enable addition of lower 4 bits
+	add r2, r4				;r4 now stores 8 bits: first the lower 4, and then the upper 4. This is the needed result.
+	mov 16(sp), r1			;address of first Output byte is added to r1
+	movb r4, (r1)	
+	;the encryption/decryption result is saved in the Output label 
+	mov (sp)+, r5
+	mov (sp)+, r4
+	mov (sp)+, r3
+	mov (sp)+, r2
+	mov (sp)+, r1
+	rts pc
+	
+	
+	
+Keys:		.byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17      ;M1
+		.byte 17, 2, 15, 11, 3, 10, 5, 13, 1, 4, 14, 12, 0, 6, 7, 16      ;M2
+KeysLen:	.word 2
+Secret:
+  .byte 010, 214, 037, 210, 214, 216, 031, 277, 005, 214,216,037, 214, 031, 261
+.even
+SecretLen:	.word 15.
+TextList:        .word Txt1, 11., 0, Out1, Node1
+Dictionary:	.ascii<Perfect@job@is@Secret@top@> 
+.even
+DicLen:	.word 5
+Matrix:	.byte 12, 6, 10, 15, 1, 16, 3, 7, 4, 14, 5, 11, 2, 13, 0, 17      ;M
+
+Node1:	.word Txt2, 4, 0, Out2, Node2
+Node2:	.word Txt3, 4, 1, Out3, 0
+Txt1:		.ascii<I love atam>
+Txt2:		.ascii <Atam>
+Txt3:		.byte 044, 214, 044, 302
+
+.even
+Output: 	.blkw 20
+Out1: 	.blkw 10
+Out2: 	.blkw 10
+Out3: 	.blkw 10
